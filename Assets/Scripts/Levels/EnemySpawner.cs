@@ -8,7 +8,6 @@ using System.Collections;
 using System.Linq;
 using RPNEvaluator;
 using System.Linq.Expressions;
-
 public class Enemy
 {
     public string name { get; set; }
@@ -16,23 +15,6 @@ public class Enemy
     public int hp { get; set; }
     public int speed { get; set; }
     public int damage { get; set; }
-}
-
-public class Levels
-{
-    public string name { get; set; }
-    public int waves { get; set; }
-    public List<Spawn> spawns { get; set; }
-}
-
-public class Spawn
-{
-    public string enemy {  get; set; }
-    public string count { get; set; }
-    public string hp { get; set; }
-    public string delay { get; set; }
-    public int[] sequence { get; set; }
-    public string location { get; set; }
 }
 
 public class EnemySpawner : MonoBehaviour
@@ -43,7 +25,7 @@ public class EnemySpawner : MonoBehaviour
     public SpawnPoint[] SpawnPoints;
     public Dictionary<string, int> dict;
     private List<Enemy> enemyConfig;
-    private List<Levels> levelConfig;
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -55,9 +37,8 @@ public class EnemySpawner : MonoBehaviour
         dict = new Dictionary<string, int>();
         //store enemy info
         string enemyData = File.ReadAllText("./Assets/Resources/enemies.json");
-        string levelData = File.ReadAllText("./Assets/Resources/levels.json");
-        List<Enemy> enemyConfig = JsonConvert.DeserializeObject<List<Enemy>>(enemyData);
-        List<Levels> levelConfig = JsonConvert.DeserializeObject<List<Levels>>(levelData);
+        enemyConfig = JsonConvert.DeserializeObject<List<Enemy>>(enemyData);
+        
     }
 
     // Update is called once per frame
@@ -92,8 +73,8 @@ public class EnemySpawner : MonoBehaviour
         GameManager.Instance.state = GameManager.GameState.INWAVE;
         //add wave to index
         int wave = dict.TryGetValue("wave", out wave) ? wave : 1;
-        //int spawnCount = RPNEvaluator.RPNEvaluator.Evaluate(levelConfig[0]?.spawns[1]?.count, dict);
-        for (int i = 0; i < 10; ++i)
+        int spawnCount = (RPNEvaluator.RPNEvaluator.Evaluate(LevelSelector.Instance.levelConfig[0].spawns[1].count, dict) == 10) ? 12:10;
+        for (int i = 0; i < spawnCount; ++i)
         {
             yield return SpawnEnemy();
         }
@@ -109,7 +90,7 @@ public class EnemySpawner : MonoBehaviour
                 
         Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
-
+        
         new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(0);
         EnemyController en = new_enemy.GetComponent<EnemyController>();
         en.hp = new Hittable(50, Hittable.Team.MONSTERS, new_enemy);
@@ -126,13 +107,15 @@ public class EnemySpawner : MonoBehaviour
         Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
 
-        new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(enemyConfig[0].sprite);
+        new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(enemyConfig[1].sprite);
         EnemyController en = new_enemy.GetComponent<EnemyController>();
-        en.hp = new Hittable(enemyConfig[0].hp, Hittable.Team.MONSTERS, new_enemy);
-        en.speed = enemyConfig[0].speed;
+        en.hp = new Hittable(enemyConfig[1].hp, Hittable.Team.MONSTERS, new_enemy);
+        en.speed = enemyConfig[1].speed;
         GameManager.Instance.AddEnemy(new_enemy);
         
-        float delay = RPNEvaluator.RPNEvaluator.Evaluatef(levelConfig[0].spawns[1].delay, dict);
-        yield return new WaitForSeconds(0.5f);
+        float delay = RPNEvaluator.RPNEvaluator.Evaluatef(LevelSelector.Instance.levelConfig[0].spawns[1].delay ?? "1.0", dict);
+        yield return new WaitForSeconds(delay);
     }
+
+
 }
