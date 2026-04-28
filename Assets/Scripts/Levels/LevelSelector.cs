@@ -16,6 +16,8 @@ public class Spawn
     public string enemy { get; set; }
     public string count { get; set; }
     public string hp { get; set; }
+    public string speed { get; set; }
+    public string damage { get; set; }
     public string delay { get; set; }
     public int[] sequence { get; set; }
     public string location { get; set; }
