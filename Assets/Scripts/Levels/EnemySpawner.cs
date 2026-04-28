@@ -41,7 +41,8 @@ public class EnemySpawner : MonoBehaviour
             i += 40;
         }
         dict = new Dictionary<string, int>();
-        dict.TryAdd("wave", 1); //initialize dict
+        dict.TryAdd("wave", 1); //initialize dict vars
+        dict.TryAdd("base", 5);
         //store enemy info
         string enemyData = File.ReadAllText("./Assets/Resources/enemies.json");
         enemyConfig = JsonConvert.DeserializeObject<List<Enemy>>(enemyData);
@@ -136,7 +137,7 @@ public class EnemySpawner : MonoBehaviour
             List<SpawnPoint> matching = new List<SpawnPoint>();
             foreach (SpawnPoint sp in SpawnPoints)
             {
-                if (sp.KindString() == type)
+                if (sp.kindString() == type)
                 {
                     matching.Add(sp);
                 }
@@ -176,7 +177,7 @@ public class EnemySpawner : MonoBehaviour
         int mobDamage = RPNEvaluator.RPNEvaluator.Evaluate(mob.damage ?? "base", dict);
 
         en.hp = new Hittable(mobHP, Hittable.Team.MONSTERS, new_enemy);
-        en.speed = mobSpeed;
+        //en.speed = mobSpeed;
         en.attackDamage = mobDamage;
 
         GameManager.Instance.AddEnemy(new_enemy);
