@@ -90,22 +90,7 @@ public class EnemySpawner : MonoBehaviour
         {
             foreach(Spawn mob in spawns)
             {
-                int spawnCount = RPNEvaluator.RPNEvaluator.Evaluate(mob.count, dict);
-                for (int i = 0; i < spawnCount; ++i)
-                {
-                    if (mob.sequence != null)
-                    {
-                        foreach (int amount in mob.sequence)
-                        {
-                            for (int j = 0; j < amount && GameManager.Instance.enemy_count < spawnCount; ++j)
-                            {
-                                yield return SpawnEnemy(mob);
-                            }
-                        }
-                    }
-                    else
-                        yield return SpawnEnemy(mob);
-                }
+                yield return SpawnEnemies(mob);
             }
         }
         
@@ -157,5 +142,24 @@ public class EnemySpawner : MonoBehaviour
         yield return new WaitForSeconds(RPNEvaluator.RPNEvaluator.Evaluatef(mob.delay ?? "1",dict));
     }
 
+    IEnumerator SpawnEnemies(Spawn mob)
+    {
+        int spawnCount = RPNEvaluator.RPNEvaluator.Evaluate(mob.count, dict);
+        for (int i = 0; i < spawnCount; ++i)
+        {
+            if (mob.sequence != null)
+            {
+                foreach (int amount in mob.sequence)
+                {
+                    for (int j = 0; j < amount && GameManager.Instance.enemy_count < spawnCount; ++j)
+                    {
+                        yield return SpawnEnemy(mob);
+                    }
+                }
+            }
+            else
+                yield return SpawnEnemy(mob);
+        }
+    }
 
 }
