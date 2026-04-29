@@ -51,8 +51,15 @@
                 "hp": "75 50 wave * +",
                 "damage": "base 10 +",
                 "location": "random bone"
+            },
+            {
+              "enemy": "ghost",
+              "count": "wave 2 /",
+              "hp": "base 10 wave * +",
+              "sequence": [1, 2],
+              "location": "random green"
             }
-        ]
+       ]
    },
    {
        "name": "Endless",
@@ -86,6 +93,6 @@
                 "damage": "base 50 +",
                 "location": "random green"
             }
-        ]
+       ]
    }
 ]
