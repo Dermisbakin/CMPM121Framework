@@ -7,7 +7,7 @@ classDiagram
     GameManager --> EnemySpawner : tracks run state and enemies
     EnemySpawner --> LevelSelector : reads selected level
     LevelSelector --> Levels : stores levels.json entries
-    Levels --> Spawn : contains spawn rules
+    Levels --> Spawn : contains enemy spawn rules
     EnemySpawner --> Enemy : reads enemies.json entries
     EnemySpawner --> SpawnPoint : chooses spawn location
     EnemySpawner --> EnemyController : assigns hp speed damage
@@ -15,6 +15,87 @@ classDiagram
     PlayerController --> GameManager : reports player death
     RewardScreenManager --> GameManager : shows continue or return button
     WaveLabelController --> GameManager : shows wave and result text
+
+    class GameManager {
+        +int wave
+        +int maxWaves
+        +string levelName
+        +string resultMessage
+        +int enemiesSpawned
+        +int enemiesDefeated
+        +void NewRun(string level, int waves)
+        +void ClearEnemies()
+    }
+
+    class RewardScreenManager {
+        +GameObject rewardUI
+        +private TextMeshProUGUI buttonText
+        +private TextMeshProUGUI messageText
+        +void Start()
+        +void Update()
+        +void GetMessage()
+    }
+
+    class WaveLabelController {
+        +TextMeshProUGUI tmp
+        +void Start()
+        +void Update()
+    }
+
+    class PlayerController {
+        +private Coroutine manaRoutine
+    }
+
+    class EnemySpawner {
+        +Dictionary<string, int> dict
+        +Dictionary<string, float> dictf
+        +private List<Enemy> enemyConfig
+        +private bool spawning
+        +void ReturnToRestart()
+        +Enemy FindEnemy(string name)
+        +SpawnPoint GetSpawnPoint(string location)
+        -private SpawnPoint ChooseSpawnPoint(string location)
+        -private bool SpawnLocationMatches(SpawnPoint spawnPoint, string location)
+        +void SpawnSingleEnemy(Spawn mob, Enemy mobEntity)
+        +IEnumerator SpawnEnemies(Spawn mob)
+    }
+
+    class Enemy {
+        +string name
+        +int sprite
+        +int hp
+        +int speed
+        +int damage
+    }
+
+    class LevelSelector {
+        +string Difficulty
+        +List<Levels> levelConfig
+        +private static LevelSelector theInstance
+        +LevelSelector Instance
+        +void ChangeLevel()
+        +Levels GetLevel(string name)
+        +List<Spawn> GetSpawn(string name)
+        +private LevelSelector()
+    }
+
+    class Levels {
+        +string name
+        +int waves
+        +List<Spawn> spawns
+    }
+
+    class Spawn {
+        +string enemy
+        +string count
+        +string hp
+        +string speed
+        +string damage
+        +string delay
+        +int[] sequence
+        +string location
+    }
+
 ```
 
 ## Architecture Description
@@ -25,6 +106,8 @@ The level and enemy data are loaded from JSON into small data classes. `LevelSel
 
 ## Added Classes And Methods
 
+- Added classes `Levels` and `Spawn` for storing levels.json into a new class: `LevelSelector`.
+- Added class `Enemy` for storing enemies.json.
 - Added fields to `Enemy` for JSON enemy stats.
 - Added `speed` and `damage` fields to `Spawn`.
 - Added `LevelSelector.GetLevel`.
