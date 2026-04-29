@@ -5,22 +5,22 @@
        "spawns": [
             {
                 "enemy": "zombie",
-                "count": "5 wave +",
+                "count": "8 wave 2 * +",
                 "hp": "base 5 wave * +",
-                "delay": "5",
-                "sequence": [1,2,3],
+                "delay": "0.5",
+                "sequence": [2,3,4],
                 "location": "random"
             },
             {
                 "enemy": "skeleton",
-                "count": "wave 3 /",
+                "count": "2 wave 2 / +",
                 "hp": "30 wave *",
                 "sequence": [2, 2],
                 "location": "random red"
             },
             {
                 "enemy": "warlock",
-                "count": "wave 5 / 1 wave 5 % - *",
+                "count": "wave 4 /",
                 "hp": "100 25 wave * +",
                 "location": "random bone"
             }
@@ -32,22 +32,22 @@
        "spawns": [
             {
                 "enemy": "zombie",
-                "count": "5 wave 2 * +",
+                "count": "10 wave 3 * +",
                 "hp": "25 wave *",
-                "delay": "5",
-                "sequence": [1,2,3],
+                "delay": "0.4",
+                "sequence": [3,4,5],
                 "location": "random"
             },
             {
                 "enemy": "skeleton",
-                "count": "wave 2 /",
+                "count": "3 wave +",
                 "hp": "25 wave *",
                 "sequence": [2, 2],
                 "location": "random red"
             },
             {
                 "enemy": "warlock",
-                "count": "wave 5 / 1 wave 5 % - *",
+                "count": "1 wave 3 / +",
                 "hp": "75 50 wave * +",
                 "damage": "base 10 +",
                 "location": "random bone"
@@ -59,22 +59,22 @@
        "spawns": [
             {
                 "enemy": "zombie",
-                "count": "5 wave 3 * +",
+                "count": "12 wave 4 * +",
                 "hp": "15 wave *",
-                "delay": "5",
-                "sequence": [1,2,3],
+                "delay": "0.35",
+                "sequence": [4,5,6],
                 "location": "random"
             },
             {
                 "enemy": "skeleton",
-                "count": "wave 4 /",
+                "count": "4 wave 2 * +",
                 "hp": "20 wave *",
                 "sequence": [2, 2],
                 "location": "random red"
             },
             {
                 "enemy": "warlock",
-                "count": "wave 10 / 1 wave 10 % - *",
+                "count": "1 wave 5 / +",
                 "hp": "75 15 wave * +",
                 "damage": "base 5 -",
                 "location": "random bone"
