@@ -22,6 +22,7 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemy;
     public SpawnPoint[] SpawnPoints;
     public Dictionary<string, int> dict;
+    public Dictionary<string, float> dictf;
     private List<Enemy> enemyConfig;
     private bool spawning;
 
@@ -39,6 +40,7 @@ public class EnemySpawner : MonoBehaviour
             i += 40;
         }
         dict = new Dictionary<string, int>();
+        dictf = new Dictionary<string, float>();
         dict.TryAdd("wave", 1); //initialize dict vars
         dict.TryAdd("base", 5);
         //store enemy info
@@ -117,7 +119,7 @@ public class EnemySpawner : MonoBehaviour
             foreach (Spawn mob in spawns)
             {
                 if (GameManager.Instance.state != GameManager.GameState.INWAVE) break;
-                yield return SpawnEnemies(mob);
+                yield return StartCoroutine(SpawnEnemies(mob));
             }
         }
         
@@ -273,8 +275,8 @@ public class EnemySpawner : MonoBehaviour
         if (spawnCount <= 0) yield break;
 
         // get delay, default is 2
-        dict["base"] = 2;
-        float delayTime = RPNEvaluator.RPNEvaluator.Evaluatef(mob.delay ?? "base", dict);
+        dictf.TryAdd("base", 2);
+        float delayTime = RPNEvaluator.RPNEvaluator.Evaluatef(mob.delay ?? "base", dictf);
 
         // sequence defaults to [1] if not set
         int[] seq = mob.sequence;
