@@ -5,6 +5,7 @@ public class EnemyController : MonoBehaviour
 
     public Transform target;
     public int speed;
+    public int damage = 5;
     public Hittable hp;
     public HealthBar healthui;
     public bool dead;
@@ -14,6 +15,10 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         target = GameManager.Instance.player.transform;
+        if (hp == null)
+        {
+            hp = new Hittable(50, Hittable.Team.MONSTERS, gameObject);
+        }
         hp.OnDeath += Die;
         healthui.SetHealth(hp);
     }
@@ -21,9 +26,16 @@ public class EnemyController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (GameManager.Instance.state != GameManager.GameState.INWAVE || target == null)
+        {
+            GetComponent<Unit>().movement = Vector2.zero;
+            return;
+        }
+
         Vector3 direction = target.position - transform.position;
         if (direction.magnitude < 2f)
         {
+            GetComponent<Unit>().movement = Vector2.zero;
             DoAttack();
         }
         else
@@ -37,7 +49,11 @@ public class EnemyController : MonoBehaviour
         if (last_attack + 2 < Time.time)
         {
             last_attack = Time.time;
-            target.gameObject.GetComponent<PlayerController>().hp.Damage(new Damage(5, Damage.Type.PHYSICAL));
+            PlayerController player = target.gameObject.GetComponent<PlayerController>();
+            if (player.hp != null)
+            {
+                player.hp.Damage(new Damage(damage, Damage.Type.PHYSICAL));
+            }
         }
     }
 

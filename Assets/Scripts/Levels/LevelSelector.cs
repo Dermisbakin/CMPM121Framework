@@ -1,8 +1,6 @@
 using Newtonsoft.Json;
 using System.IO;
 using System.Collections.Generic;
-using UnityEditor.PackageManager;
-using UnityEngine;
 
 public class Levels
 {
@@ -17,9 +15,12 @@ public class Spawn
     public string count { get; set; }
     public string hp { get; set; }
     public string delay { get; set; }
+    public string speed { get; set; }
+    public string damage { get; set; }
     public int[] sequence { get; set; }
     public string location { get; set; }
 }
+
 public class LevelSelector
 {
     public string Difficulty;
@@ -38,13 +39,19 @@ public class LevelSelector
         Difficulty = level;
     }
 
-    public List<Spawn> GetSpawn(string name)
+    public Levels GetLevel(string name)
     {
-        foreach (var level in levelConfig)
+        foreach (Levels level in levelConfig)
         {
-            if (name == level.name) return level.spawns;
+            if (name == level.name) return level;
         }
         return null;
+    }
+
+    public List<Spawn> GetSpawn(string name)
+    {
+        Levels level = GetLevel(name);
+        return level?.spawns;
     }
 
     private LevelSelector()
