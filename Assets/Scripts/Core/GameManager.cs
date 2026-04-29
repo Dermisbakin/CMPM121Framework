@@ -1,5 +1,4 @@
 using UnityEngine;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -80,7 +79,7 @@ public class GameManager
         {
             if (enemy != null)
             {
-                Object.Destroy(enemy);
+                UnityEngine.Object.Destroy(enemy);
             }
         }
         enemies.Clear();
