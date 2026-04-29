@@ -1,9 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using System.IO;
-using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour
 {
@@ -17,6 +13,7 @@ public class PlayerController : MonoBehaviour
     public int speed;
 
     public Unit unit;
+    private Coroutine manaRoutine;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -27,9 +24,15 @@ public class PlayerController : MonoBehaviour
 
     public void StartLevel()
     {
+        unit.movement = Vector2.zero;
+        if (manaRoutine != null)
+        {
+            StopCoroutine(manaRoutine);
+        }
+
         spellcaster = new SpellCaster(125, 8, Hittable.Team.PLAYER);
-        StartCoroutine(spellcaster.ManaRegeneration());
-        
+        manaRoutine = StartCoroutine(spellcaster.ManaRegeneration());
+
         hp = new Hittable(100, Hittable.Team.PLAYER, gameObject);
         hp.OnDeath += Die;
         hp.team = Hittable.Team.PLAYER;
@@ -43,12 +46,12 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     void OnAttack(InputValue value)
     {
-        if (GameManager.Instance.state == GameManager.GameState.PREGAME || GameManager.Instance.state == GameManager.GameState.GAMEOVER) return;
+        if (GameManager.Instance.state != GameManager.GameState.INWAVE) return;
         Vector2 mouseScreen = Mouse.current.position.value;
         Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(mouseScreen);
         mouseWorld.z = 0;
@@ -57,13 +60,20 @@ public class PlayerController : MonoBehaviour
 
     void OnMove(InputValue value)
     {
-        if (GameManager.Instance.state == GameManager.GameState.PREGAME || GameManager.Instance.state == GameManager.GameState.GAMEOVER) return;
+        if (GameManager.Instance.state != GameManager.GameState.COUNTDOWN &&
+            GameManager.Instance.state != GameManager.GameState.INWAVE)
+        {
+            unit.movement = Vector2.zero;
+            return;
+        }
         unit.movement = value.Get<Vector2>()*speed;
     }
 
     void Die()
     {
-        Debug.Log("You Lost");
+        unit.movement = Vector2.zero;
+        GameManager.Instance.resultMessage = "You were defeated on wave " + GameManager.Instance.wave + ".";
+        GameManager.Instance.state = GameManager.GameState.GAMEOVER;
     }
 
 }
