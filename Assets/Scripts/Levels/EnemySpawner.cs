@@ -4,7 +4,6 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using System.Collections;
-using System.Globalization;
 
 
 public class Enemy
@@ -23,7 +22,6 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemy;
     public SpawnPoint[] SpawnPoints;
     public Dictionary<string, int> dict;
-    public Dictionary<string, float> dictf;
     private List<Enemy> enemyConfig;
     private bool spawning;
 
@@ -41,7 +39,6 @@ public class EnemySpawner : MonoBehaviour
             i += 40;
         }
         dict = new Dictionary<string, int>();
-        dictf = new Dictionary<string, float>();
         dict.TryAdd("wave", 1); //initialize dict vars
         dict.TryAdd("base", 5);
         //store enemy info
@@ -58,6 +55,9 @@ public class EnemySpawner : MonoBehaviour
 
     public void StartLevel(string levelname)
     {
+        StopAllCoroutines();
+        spawning = false;
+        GameManager.Instance.ClearEnemies();
         level_selector.gameObject.SetActive(false);
         // this is not nice: we should not have to be required to tell the player directly that the level is starting
         GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
@@ -98,6 +98,9 @@ public class EnemySpawner : MonoBehaviour
 
     IEnumerator SpawnWave()
     {
+        if (spawning) yield break;
+        spawning = true;
+
         GameManager.Instance.wave = dict["wave"]; //update gamemanager
         GameManager.Instance.state = GameManager.GameState.COUNTDOWN;
         GameManager.Instance.countdown = 3;
@@ -107,26 +110,14 @@ public class EnemySpawner : MonoBehaviour
             GameManager.Instance.countdown--;
         }
         GameManager.Instance.state = GameManager.GameState.INWAVE;
-        //get level difficulty
-        List<Spawn> spawns = null;
-        foreach (Levels level in LevelSelector.Instance.levelConfig)
-        {
-            if (level.name == LevelSelector.Instance.Difficulty) { spawns = level.spawns; break; }
-        }
-        //loop through each enemy type
+
+        List<Spawn> spawns = LevelSelector.Instance.GetSpawn(LevelSelector.Instance.Difficulty);
         if(spawns != null)
         {
-            List<Coroutine> spawnRoutines = new List<Coroutine>();
             foreach (Spawn mob in spawns)
             {
                 if (GameManager.Instance.state != GameManager.GameState.INWAVE) break;
-                spawnRoutines.Add(StartCoroutine(SpawnEnemies(mob)));
-            }
-
-            // Wait for all spawn routines to finish
-            foreach (Coroutine c in spawnRoutines)
-            {
-                yield return c;
+                yield return SpawnEnemies(mob);
             }
         }
         
@@ -232,7 +223,15 @@ public class EnemySpawner : MonoBehaviour
     // spawn a single enemy with the right stats
     void SpawnSingleEnemy(Spawn mob, Enemy mobEntity)
     {
-        SpawnPoint spawn_point = GetSpawnPoint(mob.location);
+        if (GameManager.Instance.state != GameManager.GameState.INWAVE) return;
+
+        SpawnPoint spawn_point = ChooseSpawnPoint(mob.location);
+        if (spawn_point == null)
+        {
+            Debug.LogWarning("No spawn points are available.");
+            return;
+        }
+
         Vector2 offset = Random.insideUnitCircle * 1.8f;
         Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
 
@@ -264,13 +263,18 @@ public class EnemySpawner : MonoBehaviour
     IEnumerator SpawnEnemies(Spawn mob)
     {
         Enemy mobEntity = FindEnemy(mob.enemy);
-        if (mobEntity == null) yield break;
+        if (mobEntity == null)
+        {
+            Debug.LogWarning("Could not find enemy named " + mob.enemy);
+            yield break;
+        }
 
-        int spawnCount = RPNEvaluator.RPNEvaluator.Evaluate(mob.count, dict);
+        int spawnCount = RPNEvaluator.RPNEvaluator.Evaluate(mob.count ?? "0", dict);
         if (spawnCount <= 0) yield break;
 
         // get delay, default is 2
-        float delayTime = RPNEvaluator.RPNEvaluator.Evaluatef(mob.delay ?? "2", dictf);
+        dict["base"] = 2;
+        float delayTime = RPNEvaluator.RPNEvaluator.Evaluatef(mob.delay ?? "base", dict);
 
         // sequence defaults to [1] if not set
         int[] seq = mob.sequence;
@@ -282,7 +286,7 @@ public class EnemySpawner : MonoBehaviour
         int spawned = 0;
         int seqIndex = 0;
 
-        while (spawned < spawnCount)
+        while (spawned < spawnCount && GameManager.Instance.state == GameManager.GameState.INWAVE)
         {
             // how many to spawn in this group
             int groupSize = seq[seqIndex % seq.Length];
@@ -294,6 +298,7 @@ public class EnemySpawner : MonoBehaviour
             // spawn the group
             for (int j = 0; j < groupSize; j++)
             {
+                if (GameManager.Instance.state != GameManager.GameState.INWAVE) break;
                 SpawnSingleEnemy(mob, mobEntity);
                 spawned++;
             }

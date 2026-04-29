@@ -48,10 +48,9 @@ classDiagram
 
     class EnemySpawner {
         +Dictionary<string, int> dict
-        +Dictionary<string, float> dictf
         +private List<Enemy> enemyConfig
         +private bool spawning
-        +void ReturnToRestart()
+        +void ReturnToStart()
         +Enemy FindEnemy(string name)
         +SpawnPoint GetSpawnPoint(string location)
         -private SpawnPoint ChooseSpawnPoint(string location)
