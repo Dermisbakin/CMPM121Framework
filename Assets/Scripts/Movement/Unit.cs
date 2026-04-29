@@ -28,15 +28,26 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public void Move(Vector2 ds)
+    public bool Move(Vector2 ds)
     {
-        List<RaycastHit2D> hits = new List<RaycastHit2D>();
-        int n = GetComponent<Rigidbody2D>().Cast(ds, hits, ds.magnitude * 2);
-        if (n == 0)
-        {
-            transform.Translate(ds);
-        }
+        if (!CanMove(ds)) return false;
+        transform.Translate(ds);
+        return true;
     }
 
+    public bool CanMove(Vector2 ds)
+    {
+        if (ds.sqrMagnitude < 0.0001f) return true;
 
+        List<RaycastHit2D> hits = new List<RaycastHit2D>();
+        int n = GetComponent<Rigidbody2D>().Cast(ds.normalized, hits, ds.magnitude * 2);
+        for (int i = 0; i < n; ++i)
+        {
+            if (hits[i].collider != null && !hits[i].collider.isTrigger)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 }
