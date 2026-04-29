@@ -5,7 +5,7 @@ public class EnemyController : MonoBehaviour
 
     public Transform target;
     public int speed;
-    public int damage = 5;
+    public int attackDamage;
     public Hittable hp;
     public HealthBar healthui;
     public bool dead;
@@ -93,10 +93,11 @@ public class EnemyController : MonoBehaviour
         if (last_attack + 2 < Time.time)
         {
             last_attack = Time.time;
+            int dmg = attackDamage > 0 ? attackDamage : 5;
             PlayerController player = target.gameObject.GetComponent<PlayerController>();
             if (player.hp != null)
             {
-                player.hp.Damage(new Damage(damage, Damage.Type.PHYSICAL));
+                player.hp.Damage(new Damage(dmg, Damage.Type.PHYSICAL));
             }
         }
     }
