@@ -96,6 +96,19 @@ classDiagram
         +string location
     }
 
+    class SpawnPoint {
+        +string kindString()
+    }
+
+    class EnemyController {
+        +private Unit unit
+        +private Vector3 last_position
+        +private float stuck_time
+        +private int turn_direction
+        +Vector2 PickMoveDirection(Vector2 direction)
+        +void TrackStuck()
+    }
+
 ```
 
 ## Architecture Description
