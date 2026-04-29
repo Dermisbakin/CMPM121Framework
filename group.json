@@ -1,0 +1,24 @@
+{
+  "team": [
+    {
+      "firstname": "Todd",
+      "lastname": "Crandell",
+      "github": "TODO_TODD_GITHUB",
+      "email": "TODO_TODD_EMAIL"
+    },
+    {
+      "firstname": "Saurav",
+      "lastname": "Shah",
+      "github": "TODO_SAURAV_GITHUB",
+      "email": "TODO_SAURAV_EMAIL"
+    },
+    {
+      "firstname": "Branson",
+      "lastname": "Guan",
+      "github": "TODO_BRANSON_GITHUB",
+      "email": "TODO_BRANSON_EMAIL"
+    }
+  ],
+  "repository": "TODO_REPOSITORY_URL",
+  "commit": "e6b39e508051b86e321673e9b051423e18da5508"
+}
