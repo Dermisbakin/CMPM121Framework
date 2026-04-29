@@ -128,6 +128,7 @@ The level and enemy data are loaded from JSON into small data classes. `LevelSel
 - Added data-driven spawn helpers in `EnemySpawner`.
 - Added enemy `damage` support and movement stopping in `EnemyController`.
 - Updated `RewardScreenManager` and `WaveLabelController` to display wave, victory, and defeat states.
+- Added two new enemy types: "medusa" (in Endless mode) and "ghost" (in Medium difficulty) to enemies.json and levels.json.
 
 ## Contributions
 
@@ -135,4 +136,4 @@ Todd Crandell fixed bugs and enemy movement behavior, including stopping enemies
 
 Branson Guan worked on the initial assignment implementation, including the level selection flow, level JSON structure, and wave spawning setup.
 
-Saurav Shah worked on the initial assignment implementation, including enemy JSON data, enemy type setup, and spawn rule integration.
+Saurav Shah worked on the initial assignment implementation, including enemy JSON data, enemy type setup, additional enemy types, and spawn rule integration.
