@@ -1,9 +1,8 @@
 using UnityEngine;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public class GameManager 
+public class GameManager
 {
     public enum GameState
     {
@@ -11,11 +10,19 @@ public class GameManager
         INWAVE,
         WAVEEND,
         COUNTDOWN,
-        GAMEOVER
+        GAMEOVER,
+        VICTORY
     }
     public GameState state;
 
     public int countdown;
+    public int wave;
+    public int maxWaves;
+    public string levelName;
+    public string resultMessage;
+    public int enemiesSpawned;
+    public int enemiesDefeated;
+
     private static GameManager theInstance;
     public static GameManager Instance {  get
         {
@@ -39,10 +46,14 @@ public class GameManager
     public void AddEnemy(GameObject enemy)
     {
         enemies.Add(enemy);
+        enemiesSpawned++;
     }
     public void RemoveEnemy(GameObject enemy)
     {
-        enemies.Remove(enemy);
+        if (enemies.Remove(enemy))
+        {
+            enemiesDefeated++;
+        }
     }
 
     public GameObject GetClosestEnemy(Vector3 point)
@@ -52,8 +63,32 @@ public class GameManager
         return enemies.Aggregate((a,b) => (a.transform.position - point).sqrMagnitude < (b.transform.position - point).sqrMagnitude ? a : b);
     }
 
+    public void NewRun(string level, int waves)
+    {
+        levelName = level;
+        maxWaves = waves;
+        wave = 1;
+        enemiesSpawned = 0;
+        enemiesDefeated = 0;
+        resultMessage = "";
+    }
+
+    public void ClearEnemies()
+    {
+        foreach (GameObject enemy in enemies)
+        {
+            if (enemy != null)
+            {
+                UnityEngine.Object.Destroy(enemy);
+            }
+        }
+        enemies.Clear();
+    }
+
     private GameManager()
     {
         enemies = new List<GameObject>();
+        state = GameState.PREGAME;
+        wave = 1;
     }
 }

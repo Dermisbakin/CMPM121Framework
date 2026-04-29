@@ -19,7 +19,7 @@ public class Hittable
         if (hp <= 0)
         {
             hp = 0;
-            OnDeath();
+            OnDeath?.Invoke();
         }
     }
 

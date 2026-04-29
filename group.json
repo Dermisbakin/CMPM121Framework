@@ -1,0 +1,24 @@
+{
+  "team": [
+    {
+      "firstname": "Todd",
+      "lastname": "Crandell",
+      "github": "WoolenDoolen",
+      "email": "tcrandel@ucsc.edu"
+    },
+    {
+      "firstname": "Saurav",
+      "lastname": "Shah",
+      "github": "TODO_SAURAV_GITHUB",
+      "email": "TODO_SAURAV_EMAIL"
+    },
+    {
+      "firstname": "Branson",
+      "lastname": "Guan",
+      "github": "TODO_BRANSON_GITHUB",
+      "email": "TODO_BRANSON_EMAIL"
+    }
+  ],
+  "repository": "https://github.com/Dermisbakin/CMPM121Framework",
+  "commit": "5622cd9e065435d791560cf61e325c24681d4113"
+}
