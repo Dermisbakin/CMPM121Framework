@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Globalization;
 
+
 public class Enemy
 {
     public string name { get; set; }
@@ -22,6 +23,7 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemy;
     public SpawnPoint[] SpawnPoints;
     public Dictionary<string, int> dict;
+    public Dictionary<string, float> dictf;
     private List<Enemy> enemyConfig;
     private bool spawning;
 
@@ -39,6 +41,7 @@ public class EnemySpawner : MonoBehaviour
             i += 40;
         }
         dict = new Dictionary<string, int>();
+        dictf = new Dictionary<string, float>();
         dict.TryAdd("wave", 1); //initialize dict vars
         dict.TryAdd("base", 5);
         //store enemy info
@@ -95,6 +98,7 @@ public class EnemySpawner : MonoBehaviour
 
     IEnumerator SpawnWave()
     {
+        GameManager.Instance.wave = dict["wave"]; //update gamemanager
         GameManager.Instance.state = GameManager.GameState.COUNTDOWN;
         GameManager.Instance.countdown = 3;
         for (int i = 3; i > 0; i--)
@@ -134,10 +138,10 @@ public class EnemySpawner : MonoBehaviour
             yield break;
         }
 
-        Levels level = LevelSelector.Instance.GetLevel(LevelSelector.Instance.Difficulty);
-        if (level != null && level.waves > 0 && dict["wave"] >= level.waves)
+        Levels lvl = LevelSelector.Instance.GetLevel(LevelSelector.Instance.Difficulty);
+        if (lvl != null && lvl.waves > 0 && dict["wave"] >= lvl.waves)
         {
-            GameManager.Instance.resultMessage = "You cleared " + level.name + "!";
+            GameManager.Instance.resultMessage = "You cleared " + lvl.name + "!";
             GameManager.Instance.state = GameManager.GameState.VICTORY;
         }
         else
@@ -250,7 +254,7 @@ public class EnemySpawner : MonoBehaviour
         int mobDamage = RPNEvaluator.RPNEvaluator.Evaluate(mob.damage ?? "base", dict);
 
         en.hp = new Hittable(mobHP, Hittable.Team.MONSTERS, new_enemy);
-        //en.speed = mobSpeed;
+        en.speed = mobSpeed;
         en.attackDamage = mobDamage;
 
         GameManager.Instance.AddEnemy(new_enemy);
@@ -266,7 +270,7 @@ public class EnemySpawner : MonoBehaviour
         if (spawnCount <= 0) yield break;
 
         // get delay, default is 2
-        float delayTime = RPNEvaluator.RPNEvaluator.Evaluatef(mob.delay ?? "2", dict);
+        float delayTime = RPNEvaluator.RPNEvaluator.Evaluatef(mob.delay ?? "2", dictf);
 
         // sequence defaults to [1] if not set
         int[] seq = mob.sequence;
