@@ -3,8 +3,8 @@
     {
       "firstname": "Todd",
       "lastname": "Crandell",
-      "github": "TODO_TODD_GITHUB",
-      "email": "TODO_TODD_EMAIL"
+      "github": "WoolenDoolen",
+      "email": "tcrandel@ucsc.edu"
     },
     {
       "firstname": "Saurav",
@@ -19,6 +19,6 @@
       "email": "TODO_BRANSON_EMAIL"
     }
   ],
-  "repository": "TODO_REPOSITORY_URL",
+  "repository": "https://github.com/Dermisbakin/CMPM121Framework",
   "commit": "0c8e0a691b1f88daae81249b84b525ebe1f58e17"
 }
