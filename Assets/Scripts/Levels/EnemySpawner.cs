@@ -4,7 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using System.Collections;
-using RPNEvaluator;
+using System.Globalization;
 
 public class Enemy
 {
@@ -259,19 +259,47 @@ public class EnemySpawner : MonoBehaviour
     private int EvaluateInt(string expression, int baseValue)
     {
         if (string.IsNullOrWhiteSpace(expression)) return baseValue;
-        return RPNEvaluator.RPNEvaluator.Evaluate(expression, BuildVariables(baseValue));
+        return Mathf.FloorToInt(EvaluateExpression(expression, baseValue));
     }
 
     private float EvaluateFloat(string expression, int baseValue)
     {
         if (string.IsNullOrWhiteSpace(expression)) return baseValue;
-        return RPNEvaluator.RPNEvaluator.Evaluatef(expression, BuildVariables(baseValue));
+        return EvaluateExpression(expression, baseValue);
     }
 
-    private Dictionary<string, int> BuildVariables(int baseValue)
+    private float EvaluateExpression(string expression, int baseValue)
     {
-        Dictionary<string, int> variables = new Dictionary<string, int>(dict);
-        variables["base"] = baseValue;
-        return variables;
+        Stack<float> values = new Stack<float>();
+        string[] tokens = expression.Split(' ');
+
+        foreach (string token in tokens)
+        {
+            if (token == "") continue;
+            if (token == "wave")
+            {
+                values.Push(dict["wave"]);
+            }
+            else if (token == "base")
+            {
+                values.Push(baseValue);
+            }
+            else if (token == "+" || token == "-" || token == "*" || token == "/" || token == "%")
+            {
+                float b = values.Pop();
+                float a = values.Pop();
+                if (token == "+") values.Push(a + b);
+                if (token == "-") values.Push(a - b);
+                if (token == "*") values.Push(a * b);
+                if (token == "/") values.Push(b == 0 ? 0 : a / b);
+                if (token == "%") values.Push(b == 0 ? 0 : a % b);
+            }
+            else
+            {
+                values.Push(float.Parse(token, CultureInfo.InvariantCulture));
+            }
+        }
+
+        return values.Count == 0 ? baseValue : values.Pop();
     }
 }
