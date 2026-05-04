@@ -46,7 +46,7 @@ public class Spell
     private SpellProjectile secondaryProjectile;
 
     //keep json for future referral
-    private static JToken spellNotes;
+    private static JToken spellPage;
 
     public Spell(SpellCaster owner)
     {
@@ -59,9 +59,7 @@ public class Spell
     public virtual void SetAttributes(string name) //can(?) be used to update values per wave
     {
         //get spell of same name
-        JToken spellPage = null;
-        Grimoire.Instance.spells.ForEach(p => { if (p["name"].ToString() == name) spellPage = p; });
-        if (spellPage != null) spellNotes = spellPage;
+        spellPage = Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
         //dynamically get each field and set their values
         this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .ToList()
@@ -137,8 +135,7 @@ public class SpellModifier : Spell
     public override void SetAttributes(string name)
     {
         //get modifier of same name
-        JToken modPage = null;
-        Grimoire.Instance.modifiers.ForEach(p => { if (p["name"].ToString() == name) modPage = p; });
+        JToken modPage = Grimoire.Instance.GetPage(Grimoire.Chapter.MODIFIER, name);
         this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .ToList()
             .ForEach(p => { if (modPage[p.Name] != null) p.SetValue(this, modPage[p.Name].ToObject(p.FieldType)); });
