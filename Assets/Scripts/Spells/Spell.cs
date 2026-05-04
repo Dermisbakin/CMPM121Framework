@@ -59,7 +59,7 @@ public class Spell
     public virtual void SetAttributes(string name) //can(?) be used to update values per wave
     {
         //get spell of same name
-        spellPage = Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
+        spellPage ??= Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
         //dynamically get each field and set their values
         this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .ToList()
