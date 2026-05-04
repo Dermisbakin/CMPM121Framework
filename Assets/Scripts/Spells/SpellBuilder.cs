@@ -8,7 +8,7 @@ using System.Collections.Generic;
 public class SpellBuilder 
 {
 
-    public Spell Build(SpellCaster owner, string spellName = "arcane_bolt")
+    public Spell Build(SpellCaster owner, string spellName = "Arcane Bolt")
     {
         Spell spell = new Spell(owner);
         spell.SetAttributes(spellName);

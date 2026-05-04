@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using UnityEngine;
 
 public class Damage 
@@ -8,6 +9,14 @@ public class Damage
         PHYSICAL, ARCANE, NATURE, FIRE, ICE, DARK, LIGHT
     }
     public Type type;
+
+    [JsonConstructor]
+    public Damage(string amount, Type type)
+    {
+        this.amount = RPNEvaluator.RPNEvaluator.Evaluate(amount, GameManager.Instance.dict);
+        this.type = type;
+    }
+
     public Damage(int amount, Type type)
     {
         this.amount = amount;

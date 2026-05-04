@@ -13,9 +13,15 @@ using System.Reflection;
 public class SpellProjectile
 {
     public string trajectory {  get; set; }
-    public int speed { get; set; }
+    public float speed { get; set; }
     public float lifetime { get; set; }
     public int sprite {  get; set; }
+
+    public SpellProjectile(string speed, string lifetime = null)
+    {
+        this.speed = RPNEvaluator.RPNEvaluator.Evaluatef(speed, GameManager.Instance.dictf);
+        if(lifetime != null) this.lifetime = RPNEvaluator.RPNEvaluator.Evaluatef(lifetime, GameManager.Instance.dictf);
+    }
 }
 
 [JsonObject(MemberSerialization = MemberSerialization.Fields)]
@@ -39,21 +45,27 @@ public class Spell
     [JsonProperty("secondary_projectile")]
     private SpellProjectile secondaryProjectile;
 
+    //keep json for future referral
+    private static JToken spellNotes;
+
     public Spell(SpellCaster owner)
     {
         this.owner = owner;
+        //add owner power to both dictionaries
+        if(!GameManager.Instance.dict.TryAdd("power", owner.power)) GameManager.Instance.dict["power"] = owner.power;
+        if(!GameManager.Instance.dictf.TryAdd("power", owner.power)) GameManager.Instance.dictf["power"] = owner.power;
     }
 
-    public virtual void SetAttributes(string name)
+    public virtual void SetAttributes(string name) //can(?) be used to update values per wave
     {
         //get spell of same name
         JToken spellPage = null;
         Grimoire.Instance.spells.ForEach(p => { if (p["name"].ToString() == name) spellPage = p; });
-        this.GetType().GetProperties()
+        if (spellPage != null) spellNotes = spellPage;
+        //dynamically get each field and set their values
+        this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .ToList()
-            .ForEach(p => { p.SetValue(this, spellPage[p].ToObject(p.PropertyType)); });
-        this.cooldown = "0.75";
-        this.damage = new Damage(100, Damage.Type.ARCANE);
+            .ForEach(p => { if (spellPage[p.Name] != null) p.SetValue(this, spellPage[p.Name].ToObject(p.FieldType)); });
     }
 
     public string GetName()
@@ -127,8 +139,8 @@ public class SpellModifier : Spell
         //get modifier of same name
         JToken modPage = null;
         Grimoire.Instance.modifiers.ForEach(p => { if (p["name"].ToString() == name) modPage = p; });
-        this.GetType().GetProperties()
+        this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .ToList()
-            .ForEach(p => { p.SetValue(this, modPage[p].ToObject(p.PropertyType)); });
+            .ForEach(p => { if (modPage[p.Name] != null) p.SetValue(this, modPage[p.Name].ToObject(p.FieldType)); });
     }
 }
