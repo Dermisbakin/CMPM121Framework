@@ -39,8 +39,8 @@ public class EnemySpawner : MonoBehaviour
             selector.GetComponent<MenuSelectorController>().SetLevel(level.name);
             i += 40;
         }
-        dict = new Dictionary<string, int>();
-        dictf = new Dictionary<string, float>();
+        dict = GameManager.Instance.dict;
+        dictf = GameManager.Instance.dictf;
         dict.TryAdd("wave", 1); //initialize dict vars
         dict.TryAdd("base", 5);
         //store enemy info

@@ -7,6 +7,7 @@ public class SpellCaster
     public int mana;
     public int max_mana;
     public int mana_reg;
+    public int power;
     public Hittable.Team team;
     public Spell spell;
 
@@ -25,6 +26,7 @@ public class SpellCaster
         this.mana = mana;
         this.max_mana = mana;
         this.mana_reg = mana_reg;
+        this.power = 10;
         this.team = team;
         spell = new SpellBuilder().Build(this);
     }
