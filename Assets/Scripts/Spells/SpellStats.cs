@@ -22,6 +22,9 @@ public class SpellStats
     // trajectory override
     public string trajectoryOverride = null;
 
+    public bool isVampiric = false;
+    public bool isPiercing = false;
+
     // names of all modifiers appliedd
     public List<string> modifierNames = new List<string>();
 }
