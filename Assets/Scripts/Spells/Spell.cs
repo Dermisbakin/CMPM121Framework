@@ -1,14 +1,15 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RPNEvaluator;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
-using RPNEvaluator;
-using System.Linq;
-using Unity.VisualScripting;
-using System;
-using System.Reflection;
+using static UnityEngine.UI.CanvasScaler;
 
 public class SpellProjectile
 {
@@ -31,29 +32,30 @@ public class Spell
     public SpellCaster owner;
     public Hittable.Team team;
 
-    protected string name;
-    protected string description;
+    private string name;
+    private string description;
     private int icon;
-    private string N;
-    private Damage damage;
+    protected string N;
+    protected string spray;
+    protected Damage damage;
     [JsonProperty("secondary_damage")]
-    private Damage secondaryDamage;
+    protected Damage secondaryDamage;
     [JsonProperty("mana_cost")]
-    private string manaCost;
-    private string cooldown;
-    private SpellProjectile projectile;
+    protected string manaCost;
+    protected string cooldown;
+    protected SpellProjectile projectile;
     [JsonProperty("secondary_projectile")]
-    private SpellProjectile secondaryProjectile;
+    protected SpellProjectile secondaryProjectile;
 
     //keep json for future referral
-    private static JToken spellPage;
+    protected static JToken spellPage;
 
     public Spell(SpellCaster owner)
     {
         this.owner = owner;
         //add owner power to both dictionaries
-        if(!GameManager.Instance.dict.TryAdd("power", owner.power)) GameManager.Instance.dict["power"] = owner.power;
-        if(!GameManager.Instance.dictf.TryAdd("power", owner.power)) GameManager.Instance.dictf["power"] = owner.power;
+        GameManager.Instance.dict["power"] = owner.power;
+        GameManager.Instance.dictf["power"] = owner.power;
     }
 
     public virtual void SetAttributes(string name) //can(?) be used to update values per wave
@@ -66,6 +68,7 @@ public class Spell
             .ForEach(p => { if (spellPage[p.Name] != null) p.SetValue(this, spellPage[p.Name].ToObject(p.FieldType)); });
     }
 
+    //getters
     public string GetName()
     {
         return this.name;
@@ -91,6 +94,42 @@ public class Spell
         return this.icon;
     }
 
+    //setters
+
+    public void SetDamage(int damage, int secondaryDamage = 0)
+    {
+        this.damage.amount = damage;
+        this.secondaryDamage.amount = secondaryDamage;
+    }
+
+    public void SetSpeed(int speed, int secondarySpeed = 0)
+    {
+        this.projectile.speed = speed;
+        this.secondaryProjectile.speed = secondarySpeed;
+    }
+
+    public void SetTrajectory(string trajectory, string secondTrajectory = "")
+    {
+        this.projectile.trajectory = trajectory;
+        this.secondaryProjectile.trajectory = secondTrajectory;
+    }
+
+    public void SetLifetime(float lifetime, float secondLifetime = 0f)
+    {
+        this.projectile.lifetime = lifetime;
+        this.secondaryProjectile.lifetime = secondLifetime;
+    }
+
+    public void SetMana(string manaCost)
+    {
+        this.manaCost = manaCost;
+    }
+
+    public void SetCooldown(string cooldown)
+    {
+        this.cooldown = cooldown;
+    }
+
     public bool IsReady()
     {
         return (last_cast + GetCooldown() < Time.time);
@@ -99,11 +138,11 @@ public class Spell
     public virtual IEnumerator Cast(Vector3 where, Vector3 target, Hittable.Team team)
     {
         this.team = team;
-        GameManager.Instance.projectileManager.CreateProjectile(0, "straight", where, target - where, 15f, OnHit);
+        GameManager.Instance.projectileManager.CreateProjectile(0, "straight", where, target - where, projectile.speed, OnHit);
         yield return new WaitForEndOfFrame();
     }
 
-    void OnHit(Hittable other, Vector3 impact)
+    protected void OnHit(Hittable other, Vector3 impact)
     {
         if (other.team != team)
         {
@@ -116,8 +155,8 @@ public class Spell
 
 public class SpellModifier : Spell
 {
-    private Spell decoratee;
     public string delay;
+    public string angle;
     public string damage_multiplier;
     public string speed_multiplier;
     public string lifetime_multiplier;
@@ -126,10 +165,9 @@ public class SpellModifier : Spell
     public string cooldown_multiplier;
     public string projectile_trajectory;
 
-    public SpellModifier(SpellCaster owner, string name) : base(owner)
+    public SpellModifier(SpellCaster owner) : base(owner)
     {
         this.owner = owner;
-        decoratee = new Spell(owner);
     }
 
     public override void SetAttributes(string name)
@@ -139,5 +177,12 @@ public class SpellModifier : Spell
         this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .ToList()
             .ForEach(p => { if (modPage[p.Name] != null) p.SetValue(this, modPage[p.Name].ToObject(p.FieldType)); });
+    }
+
+    public override IEnumerator Cast(Vector3 where, Vector3 target, Hittable.Team team)
+    {
+        this.team = team;
+        GameManager.Instance.projectileManager.CreateProjectile(0, projectile_trajectory, where, target - where, projectile.speed, OnHit);
+        yield return new WaitForEndOfFrame();
     }
 }
