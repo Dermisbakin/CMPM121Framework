@@ -99,7 +99,38 @@ public class Spell
     public virtual IEnumerator Cast(Vector3 where, Vector3 target, Hittable.Team team)
     {
         this.team = team;
-        GameManager.Instance.projectileManager.CreateProjectile(0, "straight", where, target - where, 15f, OnHit);
+        last_cast = Time.time;
+
+        Vector3 direction = target - where;
+
+        if (stats.isSplitter)
+        {
+            Vector3 dir1 = Quaternion.Euler(0, 0, stats.splitAngle) * direction;
+            Vector3 dir2 = Quaternion.Euler(0, 0, -stats.splitAngle) * direction;
+            FireProjectile(where, dir1);
+            FireProjectile(where, dir2);
+        }
+        else if (stats.isDoubler)
+        {
+            FireProjectile(where, direction);
+            yield return new WaitForSeconds(stats.doubleDelay);
+            FireProjectile(where, direction);
+        }
+        else
+        {
+            FireProjectile(where, direction);
+        }
+
+        if (stats.isVampiric)
+        {
+            PlayerController pc = GameManager.Instance.player.GetComponent<PlayerController>();
+            if (pc != null && pc.hp != null)
+            {
+                int healAmount = (int)(GetDamage() * 0.2f);
+                pc.hp.hp = Mathf.Min(pc.hp.hp + healAmount, pc.hp.max_hp);
+            }
+        }
+
         yield return new WaitForEndOfFrame();
     }
 
