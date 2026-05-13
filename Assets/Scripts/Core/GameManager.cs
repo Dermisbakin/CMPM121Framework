@@ -23,6 +23,9 @@ public class GameManager
     public int enemiesSpawned;
     public int enemiesDefeated;
 
+    public Dictionary<string, int> dict;
+    public Dictionary<string, float> dictf;
+
     private static GameManager theInstance;
     public static GameManager Instance {  get
         {
@@ -90,5 +93,7 @@ public class GameManager
         enemies = new List<GameObject>();
         state = GameState.PREGAME;
         wave = 1;
+        dict = new Dictionary<string, int>();
+        dictf = new Dictionary<string, float>();
     }
 }
