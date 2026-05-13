@@ -6,7 +6,12 @@ public class ValueModifier
 
     public ModType type;
     public float value;
+    public List<SpellModifier> mods { get; set; }
 
+    public ValueModifier()
+    {
+        mods = new();
+    }
     public ValueModifier(ModType type, float value)
     {
         this.type = type;

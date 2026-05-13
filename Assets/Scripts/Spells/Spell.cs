@@ -56,8 +56,11 @@ public class Spell
         this.owner = owner;
         this.stats = new SpellStats();
         //add owner power to both dictionaries
-        GameManager.Instance.dict["power"] = owner.power;
-        GameManager.Instance.dictf["power"] = owner.power;
+        if (owner != null)
+        {
+            GameManager.Instance.dict["power"] = owner.power;
+            GameManager.Instance.dictf["power"] = owner.power;
+        }
     }
 
     public virtual void SetAttributes(string name) //can(?) be used to update values per wave
@@ -65,9 +68,13 @@ public class Spell
         //get spell of same name
         spellPage ??= Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
         //dynamically get each field and set their values
-        this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-            .ToList()
-            .ForEach(p => { if (spellPage[p.Name] != null) p.SetValue(this, spellPage[p.Name].ToObject(p.FieldType)); });
+        if (spellPage != null)
+        {
+            this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .ToList()
+                .ForEach(p => { if (spellPage[p.Name] != null) p.SetValue(this, spellPage[p.Name].ToObject(p.FieldType)); });
+        }
+        else throw new ArgumentException("Could not find a spell of this name.");
     }
 
     //getters
@@ -84,19 +91,34 @@ public class Spell
     public int GetManaCost()
     {
         float baseCost = RPNEvaluator.RPNEvaluator.Evaluatef(this.manaCost, GameManager.Instance.dict);
-        return (int)ValueModifier.Apply(baseCost, stats.manaCostMods);
+        //return (int)ValueModifier.Apply(baseCost, stats.manaCostMods);
+        return (int)baseCost;
     }
 
     public int GetDamage()
     {
         float baseDmg = this.damage.amount;
-        return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
+        //return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
+        return (int)baseDmg;
+    }
+
+    public int GetSecondaryDamage()
+    {
+        float baseDmg = this.secondaryDamage.amount;
+        //return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
+        return (int)baseDmg;
+    }
+
+    public SpellProjectile GetProjectile()
+    {
+        return this.projectile;
     }
 
     public float GetCooldown()
     {
         float baseCd = RPNEvaluator.RPNEvaluator.Evaluatef(this.cooldown, GameManager.Instance.dict);
-        return ValueModifier.Apply(baseCd, stats.cooldownMods);
+        //return ValueModifier.Apply(baseCd, stats.cooldownMods);
+        return baseCd;
     }
 
     public virtual int GetIcon()
@@ -112,7 +134,7 @@ public class Spell
         this.secondaryDamage.amount = secondaryDamage;
     }
 
-    public void SetSpeed(int speed, int secondarySpeed = 0)
+    public void SetSpeed(float speed, float secondarySpeed = 0)
     {
         this.projectile.speed = speed;
         this.secondaryProjectile.speed = secondarySpeed;
@@ -130,14 +152,19 @@ public class Spell
         this.secondaryProjectile.lifetime = secondLifetime;
     }
 
-    public void SetMana(string manaCost)
+    public void SetMana(int manaCost)
     {
-        this.manaCost = manaCost;
+        this.manaCost = manaCost.ToString();
     }
 
-    public void SetCooldown(string cooldown)
+    public void SetCooldown(float cooldown)
     {
-        this.cooldown = cooldown;
+        this.cooldown = cooldown.ToString();
+    }
+
+    public void SetSpray(int spray)
+    {
+        this.spray = spray.ToString();
     }
 
     public bool IsReady()
@@ -204,6 +231,8 @@ public class Spell
 
 public class SpellModifier : Spell
 {
+    private Spell decoratee;
+
     public string delay;
     public string angle;
     public string damage_multiplier;
@@ -216,16 +245,27 @@ public class SpellModifier : Spell
 
     public SpellModifier(SpellCaster owner) : base(owner)
     {
+        decoratee = new Spell(owner);   
         this.owner = owner;
     }
 
     public override void SetAttributes(string name)
     {
-        //get modifier of same name
+        //get modifier of same name, otherwise it's a spell name
         JToken modPage = Grimoire.Instance.GetPage(Grimoire.Chapter.MODIFIER, name);
-        this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-            .ToList()
-            .ForEach(p => { if (modPage[p.Name] != null) p.SetValue(this, modPage[p.Name].ToObject(p.FieldType)); });
+        if (modPage != null)
+        {
+            this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .ToList()
+                .ForEach(p => { if (modPage[p.Name] != null) p.SetValue(this, modPage[p.Name].ToObject(p.FieldType)); });
+        }
+        else
+        {
+            try
+            {
+                decoratee.SetAttributes(name);
+            } catch { throw new ArgumentException("Could not find a modifier of this name."); }
+        }
     }
 
     public override IEnumerator Cast(Vector3 where, Vector3 target, Hittable.Team team)
