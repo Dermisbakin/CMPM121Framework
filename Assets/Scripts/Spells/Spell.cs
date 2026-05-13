@@ -1,94 +1,108 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using RPNEvaluator;
-using System.Linq;
-using Unity.VisualScripting;
-using System;
-using System.Reflection;
 
-public class SpellProjectile
-{
-    public string trajectory {  get; set; }
-    public float speed { get; set; }
-    public float lifetime { get; set; }
-    public int sprite {  get; set; }
-
-    public SpellProjectile(string speed, string lifetime = null)
-    {
-        this.speed = RPNEvaluator.RPNEvaluator.Evaluatef(speed, GameManager.Instance.dictf);
-        if(lifetime != null) this.lifetime = RPNEvaluator.RPNEvaluator.Evaluatef(lifetime, GameManager.Instance.dictf);
-    }
-}
-
-[JsonObject(MemberSerialization = MemberSerialization.Fields)]
-public class Spell 
+public class Spell
 {
     public float last_cast;
     public SpellCaster owner;
     public Hittable.Team team;
 
-    protected string name;
-    protected string description;
-    private int icon;
-    private string N;
-    private Damage damage;
-    [JsonProperty("secondary_damage")]
-    private Damage secondaryDamage;
-    [JsonProperty("mana_cost")]
-    private string manaCost;
-    private string cooldown;
-    private SpellProjectile projectile;
-    [JsonProperty("secondary_projectile")]
-    private SpellProjectile secondaryProjectile;
+    public SpellStats stats;
 
-    //keep json for future referral
-    private static JToken spellPage;
+    public string name;
+    public string description;
+    public int icon;
+    public string damageAmount;
+    public string damageType;
+    public string manaCost;
+    public string cooldown;
+    public string projectileTrajectory;
+    public string projectileSpeed;
+    public string projectileLifetime;
+    public int projectileSprite;
 
     public Spell(SpellCaster owner)
     {
         this.owner = owner;
-        //add owner power to both dictionaries
-        if(!GameManager.Instance.dict.TryAdd("power", owner.power)) GameManager.Instance.dict["power"] = owner.power;
-        if(!GameManager.Instance.dictf.TryAdd("power", owner.power)) GameManager.Instance.dictf["power"] = owner.power;
+        this.stats = new SpellStats();
     }
 
-    public virtual void SetAttributes(string name) //can(?) be used to update values per wave
+    public void SetAttributes(JToken page)
     {
-        //get spell of same name
-        spellPage ??= Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
-        //dynamically get each field and set their values
-        this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-            .ToList()
-            .ForEach(p => { if (spellPage[p.Name] != null) p.SetValue(this, spellPage[p.Name].ToObject(p.FieldType)); });
+        if (page == null) return;
+
+        name = page["name"]?.ToString() ?? "Unknown";
+        description = page["description"]?.ToString() ?? "";
+        icon = page["icon"]?.ToObject<int>() ?? 0;
+
+        JToken dmg = page["damage"];
+        if (dmg != null)
+        {
+            damageAmount = dmg["amount"]?.ToString() ?? "10";
+            damageType = dmg["type"]?.ToString() ?? "arcane";
+        }
+        else
+        {
+            damageAmount = "10";
+            damageType = "arcane";
+        }
+
+        manaCost = page["mana_cost"]?.ToString() ?? "10";
+        cooldown = page["cooldown"]?.ToString() ?? "2";
+
+        JToken proj = page["projectile"];
+        if (proj != null)
+        {
+            projectileTrajectory = proj["trajectory"]?.ToString() ?? "straight";
+            projectileSpeed = proj["speed"]?.ToString() ?? "8";
+            projectileLifetime = proj["lifetime"]?.ToString();
+            projectileSprite = proj["sprite"]?.ToObject<int>() ?? 0;
+        }
+        else
+        {
+            projectileTrajectory = "straight";
+            projectileSpeed = "8";
+        }
     }
 
     public string GetName()
     {
-        return this.name;
+        string result = name;
+        foreach (string mod in stats.modifierNames)
+        {
+            result = mod + " " + result;
+        }
+        return result;
+    }
+
+    public string GetDescription()
+    {
+        return description;
+    }
+
+    public int GetIcon()
+    {
+        return icon;
     }
 
     public int GetManaCost()
     {
-        return RPNEvaluator.RPNEvaluator.Evaluate(this.manaCost ?? "5", GameManager.Instance.dict);
+        float baseCost = EvalFloat(manaCost ?? "10");
+        return (int)ValueModifier.Apply(baseCost, stats.manaCostMods);
     }
 
     public int GetDamage()
     {
-        return this.damage.amount;
+        float baseDmg = EvalFloat(damageAmount ?? "10");
+        return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
     }
 
     public float GetCooldown()
     {
-        return RPNEvaluator.RPNEvaluator.Evaluatef(this.cooldown, GameManager.Instance.dictf);
-    }
-
-    public virtual int GetIcon()
-    {
-        return this.icon;
+        float baseCd = EvalFloat(cooldown ?? "2");
+        return ValueModifier.Apply(baseCd, stats.cooldownMods);
     }
 
     public bool IsReady()
@@ -96,6 +110,7 @@ public class Spell
         return (last_cast + GetCooldown() < Time.time);
     }
 
+   // updated this method  to handle behavior flags and then fires projectles
     public virtual IEnumerator Cast(Vector3 where, Vector3 target, Hittable.Team team)
     {
         this.team = team;
@@ -134,41 +149,43 @@ public class Spell
         yield return new WaitForEndOfFrame();
     }
 
-    void OnHit(Hittable other, Vector3 impact)
+    protected void FireProjectile(Vector3 where, Vector3 direction)
     {
-        if (other.team != team)
+        float speed = EvalFloat(projectileSpeed ?? "8");
+        speed = ValueModifier.Apply(speed, stats.speedMods);
+
+        string trajectory = stats.trajectoryOverride ?? projectileTrajectory ?? "straight";
+
+        int dmg = GetDamage();
+        Damage.Type dtype = Damage.TypeFromString(damageType ?? "arcane");
+
+        if (projectileLifetime != null)
         {
-            other.Damage(new Damage(GetDamage(), damage.type));
+            float lt = EvalFloat(projectileLifetime);
+            lt = ValueModifier.Apply(lt, stats.lifetimeMods);
+            GameManager.Instance.projectileManager.CreateProjectile(
+                projectileSprite, trajectory, where, direction, speed,
+                (other, pos) => { if (other.team != team) other.Damage(new Damage(dmg, dtype)); },
+                lt
+            );
         }
-
+        else
+        {
+            GameManager.Instance.projectileManager.CreateProjectile(
+                projectileSprite, trajectory, where, direction, speed,
+                (other, pos) => { if (other.team != team) other.Damage(new Damage(dmg, dtype)); }
+            );
+        }
     }
 
-}
-
-public class SpellModifier : Spell
-{
-    private Spell decoratee;
-    public string delay;
-    public string damage_multiplier;
-    public string speed_multiplier;
-    public string lifetime_multiplier;
-    public string mana_multiplier;
-    public string mana_adder;
-    public string cooldown_multiplier;
-    public string projectile_trajectory;
-
-    public SpellModifier(SpellCaster owner, string name) : base(owner)
+    protected float EvalFloat(string expr)
     {
-        this.owner = owner;
-        decoratee = new Spell(owner);
-    }
-
-    public override void SetAttributes(string name)
-    {
-        //get modifier of same name
-        JToken modPage = Grimoire.Instance.GetPage(Grimoire.Chapter.MODIFIER, name);
-        this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-            .ToList()
-            .ForEach(p => { if (modPage[p.Name] != null) p.SetValue(this, modPage[p.Name].ToObject(p.FieldType)); });
+        Dictionary<string, int> d = GameManager.Instance.dict;
+        if (owner != null)
+        {
+            if (!d.ContainsKey("power")) d.Add("power", owner.power);
+            else d["power"] = owner.power;
+        }
+        return RPNEvaluator.RPNEvaluator.Evaluatef(expr, d);
     }
 }
