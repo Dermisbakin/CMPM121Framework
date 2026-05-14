@@ -114,14 +114,14 @@ public class SpellBuilder
         }
 
         //value initialization
-        WithDelay(delay);
-        WithAngle(angle);
-        DmgMod(dmg, dmgf);
-        SpeedMod((int)speed, speedf);
-        LifetimeMod(lifetime, lifetimef);
-        ManaMod(mana, manaf);
-        CDMod(cooldown*cooldownf);
-        TrajectoryMod(trajectory);
+        //WithDelay(delay);
+        //WithAngle(angle);
+        //DmgMod(dmg, dmgf);
+        //SpeedMod((int)speed, speedf);
+        //LifetimeMod(lifetime, lifetimef);
+        //ManaMod(mana, manaf);
+        //CDMod(cooldown*cooldownf);
+        //TrajectoryMod(trajectory);
 
         return spell;
     }

@@ -15,7 +15,7 @@ public class SpellCaster
     public List<Spell> spells;
     public int activeSpellIndex;
 
-    public Spell spell { get { return spells.Count > 0 ? spells[activeSpellIndex] : null; } }
+    public Spell spell; //{ get { return spells.Count > 0 ? spells[activeSpellIndex] : null; } }
 
     public IEnumerator ManaRegeneration()
     {
@@ -37,8 +37,8 @@ public class SpellCaster
         this.spells = new List<Spell>();
         this.activeSpellIndex = 0;
 
-        Spell starter = new SpellBuilder().Seed(this).Build();
-        spells.Add(starter);
+        spell = new SpellBuilder().Seed(this).Build();
+        spells.Add(spell);
     }
 
     public IEnumerator Cast(Vector3 where, Vector3 target)
