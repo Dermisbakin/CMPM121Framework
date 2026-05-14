@@ -252,23 +252,39 @@ public class SpellModifier : Spell
         this.owner = owner;
     }
 
-    public override void SetAttributes(string name)
+    public virtual void SetAttributes(string name)
     {
-        JToken modPage = Grimoire.Instance.GetPage(Grimoire.Chapter.MODIFIER, name);
-        if (modPage != null)
+        spellPage ??= Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
+        if (spellPage != null)
         {
             this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
                 .ToList()
-                .ForEach(p => { if (modPage[p.Name] != null) p.SetValue(this, modPage[p.Name].ToObject(p.FieldType)); });
-        }
-        else
-        {
-            try
+                .ForEach(p => { if (spellPage[p.Name] != null) p.SetValue(this, spellPage[p.Name].ToObject(p.FieldType)); });
+
+            // manually parse projectile since it has RPN speed/lifetime strings
+            if (spellPage["projectile"] != null)
             {
-                decoratee.SetAttributes(name);
+                JToken proj = spellPage["projectile"];
+                projectile = new SpellProjectile(
+                    proj["speed"]?.ToString() ?? "8",
+                    proj["lifetime"]?.ToString()
+                );
+                projectile.trajectory = proj["trajectory"]?.ToString() ?? "straight";
+                projectile.sprite = proj["sprite"]?.ToObject<int>() ?? 0;
             }
-            catch { throw new ArgumentException("Could not find a modifier of this name."); }
+
+            if (spellPage["secondary_projectile"] != null)
+            {
+                JToken proj = spellPage["secondary_projectile"];
+                secondaryProjectile = new SpellProjectile(
+                    proj["speed"]?.ToString() ?? "8",
+                    proj["lifetime"]?.ToString()
+                );
+                secondaryProjectile.trajectory = proj["trajectory"]?.ToString() ?? "straight";
+                secondaryProjectile.sprite = proj["sprite"]?.ToObject<int>() ?? 0;
+            }
         }
+        else throw new ArgumentException("Could not find a spell of this name.");
     }
 
     public override IEnumerator Cast(Vector3 where, Vector3 target, Hittable.Team team)
