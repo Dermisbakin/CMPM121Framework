@@ -39,20 +39,21 @@ public class Spell
     protected string N;
     protected string spray;
     protected Damage damage;
-    protected Damage secondary_damage;
-    protected string mana_cost;
+    [JsonProperty("secondary_damage")]
+    protected Damage secondaryDamage;
+    [JsonProperty("mana_cost")]
+    protected string manaCost;
     protected string cooldown;
     protected SpellProjectile projectile;
-    protected SpellProjectile secondary_projectile;
+    [JsonProperty("secondary_projectile")]
+    protected SpellProjectile secondaryProjectile;
 
-    //keep json for future referral
     protected static JToken spellPage;
 
     public Spell(SpellCaster owner)
     {
         this.owner = owner;
         this.stats = new SpellStats();
-        //add owner power to both dictionaries
         if (owner != null)
         {
             GameManager.Instance.dict["power"] = owner.power;
@@ -60,21 +61,18 @@ public class Spell
         }
     }
 
-    public virtual void SetAttributes(string name) //can(?) be used to update values per wave
+    public virtual void SetAttributes(string name)
     {
-        //get spell of same name
         spellPage ??= Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
-        //dynamically get each field and set their values
         if (spellPage != null)
         {
             this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
                 .ToList()
                 .ForEach(p => { if (spellPage[p.Name] != null) p.SetValue(this, spellPage[p.Name].ToObject(p.FieldType)); });
         }
-        else throw new ArgumentException($"Could not find a spell of name \"{name}\".");
+        else throw new ArgumentException("Could not find a spell of this name.");
     }
 
-    //getters
     public string GetName()
     {
         string result = this.name;
@@ -87,23 +85,23 @@ public class Spell
 
     public int GetManaCost()
     {
-        float baseCost = RPNEvaluator.RPNEvaluator.Evaluatef(this.mana_cost, GameManager.Instance.dict);
-        //return (int)ValueModifier.Apply(baseCost, stats.manaCostMods);
-        return (int)baseCost;
+        float baseCost = RPNEvaluator.RPNEvaluator.Evaluatef(this.manaCost, GameManager.Instance.dict);
+        return (int)ValueModifier.Apply(baseCost, stats.manaCostMods);
+        //return (int)baseCost;
     }
 
     public int GetDamage()
     {
         float baseDmg = this.damage.amount;
-        //return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
-        return (int)baseDmg;
+        return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
+        //return (int)baseDmg;
     }
 
     public int GetSecondaryDamage()
     {
-        float baseDmg = this.secondary_damage.amount;
-        //return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
-        return (int)baseDmg;
+        float baseDmg = this.secondaryDamage.amount;
+        return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
+        //return (int)baseDmg;
     }
 
     public SpellProjectile GetProjectile()
@@ -114,8 +112,8 @@ public class Spell
     public float GetCooldown()
     {
         float baseCd = RPNEvaluator.RPNEvaluator.Evaluatef(this.cooldown, GameManager.Instance.dict);
-        //return ValueModifier.Apply(baseCd, stats.cooldownMods);
-        return baseCd;
+        return ValueModifier.Apply(baseCd, stats.cooldownMods);
+        //return baseCd;
     }
 
     public virtual int GetIcon()
@@ -123,39 +121,33 @@ public class Spell
         return this.icon;
     }
 
-    //setters
-
-    public void SetName(string name)
-    {
-        this.name = name;
-    }
     public void SetDamage(int damage, int secondaryDamage = 0)
     {
         this.damage.amount = damage;
-        this.secondary_damage.amount = secondaryDamage;
+        this.secondaryDamage.amount = secondaryDamage;
     }
 
     public void SetSpeed(float speed, float secondarySpeed = 0)
     {
         this.projectile.speed = speed;
-        this.secondary_projectile.speed = secondarySpeed;
+        this.secondaryProjectile.speed = secondarySpeed;
     }
 
     public void SetTrajectory(string trajectory, string secondTrajectory = "")
     {
         this.projectile.trajectory = trajectory;
-        this.secondary_projectile.trajectory = secondTrajectory;
+        this.secondaryProjectile.trajectory = secondTrajectory;
     }
 
     public void SetLifetime(float lifetime, float secondLifetime = 0f)
     {
         this.projectile.lifetime = lifetime;
-        this.secondary_projectile.lifetime = secondLifetime;
+        this.secondaryProjectile.lifetime = secondLifetime;
     }
 
     public void SetMana(int manaCost)
     {
-        this.mana_cost = manaCost.ToString();
+        this.manaCost = manaCost.ToString();
     }
 
     public void SetCooldown(float cooldown)
@@ -202,6 +194,16 @@ public class Spell
             FireProjectile(where, direction, traj, finalSpeed);
         }
 
+        if (stats.isVampiric)
+        {
+            PlayerController pc = GameManager.Instance.player.GetComponent<PlayerController>();
+            if (pc != null && pc.hp != null)
+            {
+                int healAmount = (int)(GetDamage() * 0.2f);
+                pc.hp.hp = Mathf.Min(pc.hp.hp + healAmount, pc.hp.max_hp);
+            }
+        }
+
         yield return new WaitForEndOfFrame();
     }
 
@@ -244,19 +246,14 @@ public class SpellModifier : Spell
     public string cooldown_multiplier;
     public string projectile_trajectory;
 
-    //handling doubling and splitting mods
-    public int IsDoubled;
-    public int IsSplit;
-
     public SpellModifier(SpellCaster owner) : base(owner)
     {
-        decoratee = new Spell(owner);   
+        decoratee = new Spell(owner);
         this.owner = owner;
     }
 
     public override void SetAttributes(string name)
     {
-        //get modifier of same name, otherwise it's a spell name
         JToken modPage = Grimoire.Instance.GetPage(Grimoire.Chapter.MODIFIER, name);
         if (modPage != null)
         {
@@ -266,16 +263,11 @@ public class SpellModifier : Spell
         }
         else
         {
-            try{ decoratee.SetAttributes(name); }
-            catch { throw new ArgumentException($"Could not find a modifier of name \"{name}\"."); }
-            //copy its values into SpellModifier/ set ownership
-            IEnumerable<FieldInfo> fields = decoratee.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                .Where(x => x.GetValue(decoratee) != null);
-            foreach(FieldInfo field in fields)
+            try
             {
-                this.GetType().BaseType.GetField(field.Name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                    .SetValue(this, field.GetValue(decoratee));
+                decoratee.SetAttributes(name);
             }
+            catch { throw new ArgumentException("Could not find a modifier of this name."); }
         }
     }
 
