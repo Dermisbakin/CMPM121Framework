@@ -8,9 +8,9 @@ public class SpellUIContainer : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        for(int i = 1; i< spellUIs.Length; ++i)
+        for(int i = 0; i< spellUIs.Length; i++)
         {
-            spellUIs[i].SetActive(true);
+            spellUIs[i].SetActive(false);
         }
     }
 
