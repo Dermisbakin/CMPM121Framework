@@ -45,14 +45,12 @@ public class Spell
     protected SpellProjectile projectile;
     protected SpellProjectile secondary_projectile;
 
-    //keep json for future referral
     protected static JToken spellPage;
 
     public Spell(SpellCaster owner)
     {
         this.owner = owner;
         this.stats = new SpellStats();
-        //add owner power to both dictionaries
         if (owner != null)
         {
             GameManager.Instance.dict["power"] = owner.power;
@@ -60,11 +58,9 @@ public class Spell
         }
     }
 
-    public virtual void SetAttributes(string name) //can(?) be used to update values per wave
+    public virtual void SetAttributes(string name)
     {
-        //get spell of same name
         spellPage ??= Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
-        //dynamically get each field and set their values
         if (spellPage != null)
         {
             this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
@@ -74,7 +70,6 @@ public class Spell
         else throw new ArgumentException($"Could not find a spell of name \"{name}\".");
     }
 
-    //getters
     public string GetName()
     {
         string result = this.name;
@@ -95,8 +90,8 @@ public class Spell
     public int GetDamage()
     {
         float baseDmg = this.damage.amount;
-        //return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
-        return (int)baseDmg;
+        return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
+        //return (int)baseDmg;
     }
 
     public int GetSecondaryDamage()
@@ -111,11 +106,16 @@ public class Spell
         return this.projectile;
     }
 
+    public SpellProjectile GetSecondaryProjectile()
+    {
+        return this.secondary_projectile;
+    }
+
     public float GetCooldown()
     {
         float baseCd = RPNEvaluator.RPNEvaluator.Evaluatef(this.cooldown, GameManager.Instance.dict);
-        //return ValueModifier.Apply(baseCd, stats.cooldownMods);
-        return baseCd;
+        return ValueModifier.Apply(baseCd, stats.cooldownMods);
+        //return baseCd;
     }
 
     public virtual int GetIcon()
@@ -201,6 +201,16 @@ public class Spell
             FireProjectile(where, direction, traj, finalSpeed);
         }
 
+        if (stats.isVampiric)
+        {
+            PlayerController pc = GameManager.Instance.player.GetComponent<PlayerController>();
+            if (pc != null && pc.hp != null)
+            {
+                int healAmount = (int)(GetDamage() * 0.2f);
+                pc.hp.hp = Mathf.Min(pc.hp.hp + healAmount, pc.hp.max_hp);
+            }
+        }
+
         yield return new WaitForEndOfFrame();
     }
 
@@ -248,13 +258,12 @@ public class SpellModifier : Spell
 
     public SpellModifier(SpellCaster owner) : base(owner)
     {
-        decoratee = new Spell(owner);   
+        decoratee = new Spell(owner);
         this.owner = owner;
     }
 
     public override void SetAttributes(string name)
     {
-        //get modifier of same name, otherwise it's a spell name
         JToken modPage = Grimoire.Instance.GetPage(Grimoire.Chapter.MODIFIER, name);
         if (modPage != null)
         {
