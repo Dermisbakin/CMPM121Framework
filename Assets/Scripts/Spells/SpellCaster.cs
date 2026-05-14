@@ -37,8 +37,8 @@ public class SpellCaster
         this.spells = new List<Spell>();
         this.activeSpellIndex = 0;
 
-        Spell starter = new SpellBuilder().Seed(this).Build();
-        spells.Add(starter);
+        spell = new SpellBuilder().Seed(this).Build();
+        spells.Add(spell);
     }
 
     public IEnumerator Cast(Vector3 where, Vector3 target)

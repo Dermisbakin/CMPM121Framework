@@ -50,7 +50,6 @@ public class SpellBuilder
     public SpellBuilder Seed(SpellCaster owner, string spellName = "Arcane Bolt")
     {
         spell = new SpellModifier(owner);
-        spell.owner = owner;
         spell.SetAttributes(spellName);
         return this;
     }
@@ -66,6 +65,10 @@ public class SpellBuilder
             IEnumerable<FieldInfo> fields = mod.GetType().GetFields().Where(x => x.GetValue(mod) != null);
             foreach (FieldInfo field in fields)
             {
+                if (field.Name == "doubler") spell.IsDoubled++;
+                if (field.Name == "splitter") spell.IsSplit++;
+                //modify spell name
+                if (field.Name == "name") spell.SetName(field.Name + spell.GetName());
                 if (field.Name != "name" && field.Name != "description")
                 {
                     switch (sort(field.Name))
