@@ -1,9 +1,12 @@
 using Newtonsoft.Json.Linq;
+using System.Buffers.Text;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
-using UnityEngine;
+using System.Reflection;
+using Unity.VisualScripting;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEditor.Experimental.GraphView;
+using UnityEngine;
 
 
 public class SpellBuilder
@@ -47,6 +50,46 @@ public class SpellBuilder
         }
         return result;
     }
+
+    private string NamePrepend(string name)
+    {
+        if (name.Contains("double")) name = "doubled " + name;
+        if (name.Contains("split")) name = "split " + name;
+        switch(sort(name))
+        {
+            case 1:
+                name = "damage-boosted " + name;
+                break;
+            case 2:
+                name = "damage-amplified " + name;
+                break;
+            case 3:
+                name = "speed-boosted " + name;
+                break;
+            case 4:
+                name = "speed-amplified " + name;
+                break;
+            case 5:
+                name = "lifetime-boosted " + name;
+                break;
+            case 6:
+                name = "lifetime-amplified " + name;
+                break;
+            case 7:
+                name = "mana-cost-altered " + name;
+                break;
+            case 8:
+                name = "mana-cost-amplified " + name;
+                break;
+            case 9:
+                name = "cooldown-altered " + name;
+                break;
+            case 10:
+                name = "cooldown-amplified " + name;
+                break;
+        }
+        return name;
+    }
     public SpellBuilder Seed(SpellCaster owner, string spellName = "Arcane Bolt")
     {
         spell = new SpellModifier(owner);
@@ -56,8 +99,6 @@ public class SpellBuilder
     }
     public SpellModifier AutoBuild(List<SpellModifier> modList)
     {
-        int dmg = 0, mana = 0;
-        float speed = spell.GetProjectile().speed, lifetime = spell.GetProjectile().lifetime, cooldown = spell.GetCooldown(), dmgf = 1f, speedf = 1f, lifetimef = 1f, manaf = 1f, cooldownf = 1f;
         string delay = null, angle = null, trajectory = null;
 
         //combine each applicable modifier from the list
@@ -66,39 +107,43 @@ public class SpellBuilder
             IEnumerable<FieldInfo> fields = mod.GetType().GetFields().Where(x => x.GetValue(mod) != null);
             foreach (FieldInfo field in fields)
             {
+                if (field.Name == "doubler") spell.IsDoubled++;
+                if (field.Name == "splitter") spell.IsSplit++;
+                //modify spell name
+                if (field.Name == "name") spell.SetName(NamePrepend(field.GetValue(spell).ToString()));
                 if (field.Name != "name" && field.Name != "description")
                 {
                     switch (sort(field.Name))
                     {
                         case 1:
-                            dmg += (int)field.GetValue(mod);
+                            spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
                             break;
                         case 2:
-                            dmgf *= (float)field.GetValue(mod);
+                            spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
                             break;
                         case 3:
-                            speed += (float)field.GetValue(mod);
+                            spell.stats.speedMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
                             break;
                         case 4:
-                            speedf *= (float)field.GetValue(mod);
+                            spell.stats.speedMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
                             break;
                         case 5:
-                            lifetime += (float)field.GetValue(mod);
+                            spell.stats.lifetimeMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
                             break;
                         case 6:
-                            lifetimef *= (float)field.GetValue(mod);
+                            spell.stats.lifetimeMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
                             break;
                         case 7:
-                            mana += (int)field.GetValue(mod);
+                            spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
                             break;
                         case 8:
-                            manaf *= (float)field.GetValue(mod);
+                            spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
                             break;
                         case 9:
-                            cooldown = (float)field.GetValue(mod);
+                            spell.stats.cooldownMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
                             break;
                         case 10:
-                            cooldownf *= (float)field.GetValue(mod);
+                            spell.stats.cooldownMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
                             break;
                         default:
                             if (field.Name == "delay") delay = field.GetValue(mod).ToString();
@@ -113,11 +158,11 @@ public class SpellBuilder
         //value initialization
         WithDelay(delay);
         WithAngle(angle);
-        DmgMod(dmg, dmgf);
-        SpeedMod((int)speed, speedf);
-        LifetimeMod(lifetime, lifetimef);
-        ManaMod(mana, manaf);
-        CDMod(cooldown*cooldownf);
+        DmgMod((int)ValueModifier.Apply(spell.GetDamage(), spell.stats.cooldownMods) - spell.GetDamage());
+        SpeedMod(ValueModifier.Apply(spell.GetProjectile().speed, spell.stats.cooldownMods), ValueModifier.Apply(spell.GetSecondaryProjectile().speed, spell.stats.cooldownMods));
+        LifetimeMod(ValueModifier.Apply(spell.GetProjectile().lifetime, spell.stats.cooldownMods), ValueModifier.Apply(spell.GetSecondaryProjectile().lifetime, spell.stats.cooldownMods));
+        ManaMod((int)ValueModifier.Apply(spell.GetManaCost(), spell.stats.cooldownMods) - spell.GetManaCost());
+        CDMod(ValueModifier.Apply(spell.GetCooldown(), spell.stats.cooldownMods));
         TrajectoryMod(trajectory);
 
         return spell;
@@ -141,7 +186,8 @@ public class SpellBuilder
     public SpellBuilder DmgMod(int add, float multi = 1f)
     {
         int total = (int)((spell.GetDamage() + add) * multi);
-        if (spell.owner != null) spell.SetDamage(total);
+        int secondaryTotal = (int)((spell.GetSecondaryDamage() + add) * multi);
+        if (spell.owner != null) spell.SetDamage(total, secondaryTotal);
         else throw new System.InvalidOperationException("No spell owner: start with \".Build()\" first.");
         return this;
     }

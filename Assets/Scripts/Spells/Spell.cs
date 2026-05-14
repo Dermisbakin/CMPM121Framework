@@ -39,14 +39,11 @@ public class Spell
     protected string N;
     protected string spray;
     protected Damage damage;
-    [JsonProperty("secondary_damage")]
-    protected Damage secondaryDamage;
-    [JsonProperty("mana_cost")]
-    protected string manaCost;
+    protected Damage secondary_damage;
+    protected string mana_cost;
     protected string cooldown;
     protected SpellProjectile projectile;
-    [JsonProperty("secondary_projectile")]
-    protected SpellProjectile secondaryProjectile;
+    protected SpellProjectile secondary_projectile;
 
     //keep json for future referral
     protected static JToken spellPage;
@@ -74,7 +71,7 @@ public class Spell
                 .ToList()
                 .ForEach(p => { if (spellPage[p.Name] != null) p.SetValue(this, spellPage[p.Name].ToObject(p.FieldType)); });
         }
-        else throw new ArgumentException("Could not find a spell of this name.");
+        else throw new ArgumentException($"Could not find a spell of name \"{name}\".");
     }
 
     //getters
@@ -90,9 +87,9 @@ public class Spell
 
     public int GetManaCost()
     {
-        float baseCost = RPNEvaluator.RPNEvaluator.Evaluatef(this.manaCost, GameManager.Instance.dict);
-        //return (int)ValueModifier.Apply(baseCost, stats.manaCostMods);
-        return (int)baseCost;
+        float baseCost = RPNEvaluator.RPNEvaluator.Evaluatef(this.mana_cost, GameManager.Instance.dict);
+        return (int)ValueModifier.Apply(baseCost, stats.manaCostMods);
+        //return (int)baseCost;
     }
 
     public int GetDamage()
@@ -104,9 +101,9 @@ public class Spell
 
     public int GetSecondaryDamage()
     {
-        float baseDmg = this.secondaryDamage.amount;
-        //return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
-        return (int)baseDmg;
+        float baseDmg = this.secondary_damage.amount;
+        return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
+        //return (int)baseDmg;
     }
 
     public SpellProjectile GetProjectile()
@@ -126,35 +123,38 @@ public class Spell
         return this.icon;
     }
 
-    //setters
+    public void SetName(string name)
+    {
+        this.name = name;
+    }   
 
     public void SetDamage(int damage, int secondaryDamage = 0)
     {
         this.damage.amount = damage;
-        this.secondaryDamage.amount = secondaryDamage;
+        this.secondary_damage.amount = secondaryDamage;
     }
 
     public void SetSpeed(float speed, float secondarySpeed = 0)
     {
         this.projectile.speed = speed;
-        this.secondaryProjectile.speed = secondarySpeed;
+        this.secondary_projectile.speed = secondarySpeed;
     }
 
     public void SetTrajectory(string trajectory, string secondTrajectory = "")
     {
         this.projectile.trajectory = trajectory;
-        this.secondaryProjectile.trajectory = secondTrajectory;
+        this.secondary_projectile.trajectory = secondTrajectory;
     }
 
     public void SetLifetime(float lifetime, float secondLifetime = 0f)
     {
         this.projectile.lifetime = lifetime;
-        this.secondaryProjectile.lifetime = secondLifetime;
+        this.secondary_projectile.lifetime = secondLifetime;
     }
 
     public void SetMana(int manaCost)
     {
-        this.manaCost = manaCost.ToString();
+        this.mana_cost = manaCost.ToString();
     }
 
     public void SetCooldown(float cooldown)
@@ -243,6 +243,9 @@ public class SpellModifier : Spell
     public string cooldown_multiplier;
     public string projectile_trajectory;
 
+    public int IsDoubled;
+    public int IsSplit;
+
     public SpellModifier(SpellCaster owner) : base(owner)
     {
         decoratee = new Spell(owner);   
@@ -261,10 +264,16 @@ public class SpellModifier : Spell
         }
         else
         {
-            try
+            try { decoratee.SetAttributes(name); }
+            catch { throw new ArgumentException($"Could not find a modifier of name \"{name}\"."); }
+            //copy its values into SpellModifier/ set ownership
+            IEnumerable<FieldInfo> fields = decoratee.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .Where(x => x.GetValue(decoratee) != null);
+            foreach (FieldInfo field in fields)
             {
-                decoratee.SetAttributes(name);
-            } catch { throw new ArgumentException("Could not find a modifier of this name."); }
+                this.GetType().BaseType.GetField(field.Name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                   .SetValue(this, field.GetValue(decoratee));
+            }
         }
     }
 
