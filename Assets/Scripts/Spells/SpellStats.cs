@@ -17,10 +17,12 @@ public class SpellStats
 
     public bool isDoubler = false;
     public float doubleDelay = 0.5f;
-
+     
 
     // trajectory override
     public string trajectoryOverride = null;
+    //public string secondaryTrajectoryOverride = null;
+
 
     public bool isVampiric = false;
     public bool isPiercing = false;

@@ -2,11 +2,8 @@ using Newtonsoft.Json.Linq;
 using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+//using UnityEditor.Experimental.GraphView;
 
 
 public class SpellBuilder
@@ -93,7 +90,6 @@ public class SpellBuilder
     public SpellBuilder Seed(SpellCaster owner, string spellName = "Arcane Bolt")
     {
         spell = new SpellModifier(owner);
-        spell.owner = owner;
         spell.SetAttributes(spellName);
         return this;
     }
@@ -110,7 +106,7 @@ public class SpellBuilder
                 if (field.Name == "doubler") spell.IsDoubled++;
                 if (field.Name == "splitter") spell.IsSplit++;
                 //modify spell name
-                if (field.Name == "name") spell.SetName(NamePrepend(field.GetValue(spell).ToString()));
+                if (field.Name == "name") spell.SetName(field.Name + spell.GetName());
                 if (field.Name != "name" && field.Name != "description")
                 {
                     switch (sort(field.Name))
@@ -156,14 +152,14 @@ public class SpellBuilder
         }
 
         //value initialization
-        WithDelay(delay);
-        WithAngle(angle);
-        DmgMod((int)ValueModifier.Apply(spell.GetDamage(), spell.stats.cooldownMods) - spell.GetDamage());
-        SpeedMod(ValueModifier.Apply(spell.GetProjectile().speed, spell.stats.cooldownMods), ValueModifier.Apply(spell.GetSecondaryProjectile().speed, spell.stats.cooldownMods));
-        LifetimeMod(ValueModifier.Apply(spell.GetProjectile().lifetime, spell.stats.cooldownMods), ValueModifier.Apply(spell.GetSecondaryProjectile().lifetime, spell.stats.cooldownMods));
-        ManaMod((int)ValueModifier.Apply(spell.GetManaCost(), spell.stats.cooldownMods) - spell.GetManaCost());
-        CDMod(ValueModifier.Apply(spell.GetCooldown(), spell.stats.cooldownMods));
-        TrajectoryMod(trajectory);
+        //WithDelay(delay);
+        //WithAngle(angle);
+        //DmgMod(dmg, dmgf);
+        //SpeedMod((int)speed, speedf);
+        //LifetimeMod(lifetime, lifetimef);
+        //ManaMod(mana, manaf);
+        //CDMod(cooldown*cooldownf);
+        //TrajectoryMod(trajectory);
 
         return spell;
     }
