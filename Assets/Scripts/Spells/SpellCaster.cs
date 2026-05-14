@@ -15,7 +15,7 @@ public class SpellCaster
     public List<Spell> spells;
     public int activeSpellIndex;
 
-    public Spell spell; //{ get { return spells.Count > 0 ? spells[activeSpellIndex] : null; } }
+    public Spell spell { get { return spells.Count > 0 ? spells[activeSpellIndex] : null; } }
 
     public IEnumerator ManaRegeneration()
     {
