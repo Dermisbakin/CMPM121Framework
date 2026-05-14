@@ -2,7 +2,8 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class SpellCaster 
+
+public class SpellCaster
 {
     public int mana;
     public int max_mana;
@@ -14,8 +15,7 @@ public class SpellCaster
     public List<Spell> spells;
     public int activeSpellIndex;
 
-    public Spell spell;
-
+    public Spell spell { get { return spells.Count > 0 ? spells[activeSpellIndex] : null; } }
 
     public IEnumerator ManaRegeneration()
     {
@@ -37,8 +37,8 @@ public class SpellCaster
         this.spells = new List<Spell>();
         this.activeSpellIndex = 0;
 
-        spell = new SpellBuilder().Seed(this).Build();
-        spells.Add(spell);
+        Spell starter = new SpellBuilder().Seed(this).Build();
+        spells.Add(starter);
     }
 
     public IEnumerator Cast(Vector3 where, Vector3 target)
