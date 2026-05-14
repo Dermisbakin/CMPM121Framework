@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour
 {
@@ -15,7 +16,6 @@ public class PlayerController : MonoBehaviour
     public Unit unit;
     private Coroutine manaRoutine;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         unit = GetComponent<Unit>();
@@ -30,23 +30,60 @@ public class PlayerController : MonoBehaviour
             StopCoroutine(manaRoutine);
         }
 
-        spellcaster = new SpellCaster(125, 8, Hittable.Team.PLAYER);
+        Dictionary<string, int> d = GameManager.Instance.dict;
+        if (!d.ContainsKey("wave")) d.Add("wave", 1);
+        else d["wave"] = 1;
+
+        int maxHP = RPNEvaluator.RPNEvaluator.Evaluate("95 wave 5 * +", d);
+        int maxMana = RPNEvaluator.RPNEvaluator.Evaluate("90 wave 10 * +", d);
+        int manaReg = RPNEvaluator.RPNEvaluator.Evaluate("10 wave +", d);
+        int spellPower = RPNEvaluator.RPNEvaluator.Evaluate("wave 10 *", d);
+        speed = RPNEvaluator.RPNEvaluator.Evaluate("5", d);
+
+        spellcaster = new SpellCaster(maxMana, manaReg, Hittable.Team.PLAYER);
+        spellcaster.power = spellPower;
         manaRoutine = StartCoroutine(spellcaster.ManaRegeneration());
 
-        hp = new Hittable(100, Hittable.Team.PLAYER, gameObject);
+        hp = new Hittable(maxHP, Hittable.Team.PLAYER, gameObject);
         hp.OnDeath += Die;
         hp.team = Hittable.Team.PLAYER;
 
-        // tell UI elements what to show
         healthui.SetHealth(hp);
         manaui.SetSpellCaster(spellcaster);
         spellui.SetSpell(spellcaster.spell);
     }
 
-    // Update is called once per frame
+    public void ScaleStats(int wave)
+    {
+        Dictionary<string, int> d = GameManager.Instance.dict;
+        d["wave"] = wave;
+
+        int maxHP = RPNEvaluator.RPNEvaluator.Evaluate("95 wave 5 * +", d);
+        int maxMana = RPNEvaluator.RPNEvaluator.Evaluate("90 wave 10 * +", d);
+        int manaReg = RPNEvaluator.RPNEvaluator.Evaluate("10 wave +", d);
+        int spellPower = RPNEvaluator.RPNEvaluator.Evaluate("wave 10 *", d);
+        speed = RPNEvaluator.RPNEvaluator.Evaluate("5", d);
+
+        hp.SetMaxHP(maxHP);
+
+        spellcaster.max_mana = maxMana;
+        spellcaster.mana = Mathf.Min(spellcaster.mana, maxMana);
+        spellcaster.mana_reg = manaReg;
+        spellcaster.power = spellPower;
+
+        healthui.SetHealth(hp);
+    }
+
     void Update()
     {
 
+    }
+
+    void OnNextSpell(InputValue value)
+    {
+        if (spellcaster == null) return;
+        spellcaster.NextSpell();
+        spellui.SetSpell(spellcaster.spell);
     }
 
     void OnAttack(InputValue value)
@@ -66,7 +103,7 @@ public class PlayerController : MonoBehaviour
             unit.movement = Vector2.zero;
             return;
         }
-        unit.movement = value.Get<Vector2>()*speed;
+        unit.movement = value.Get<Vector2>() * speed;
     }
 
     void Die()
@@ -75,5 +112,4 @@ public class PlayerController : MonoBehaviour
         GameManager.Instance.resultMessage = "You were defeated on wave " + GameManager.Instance.wave + ".";
         GameManager.Instance.state = GameManager.GameState.GAMEOVER;
     }
-
 }

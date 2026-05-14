@@ -126,7 +126,7 @@ public class Spell
     public void SetName(string name)
     {
         this.name = name;
-    }   
+    }
 
     public void SetDamage(int damage, int secondaryDamage = 0)
     {
@@ -255,7 +255,6 @@ public class SpellModifier : Spell
 
     public int IsDoubled;
     public int IsSplit;
-
     public SpellModifier(SpellCaster owner) : base(owner)
     {
         decoratee = new Spell(owner);
