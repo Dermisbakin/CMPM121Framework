@@ -7,11 +7,11 @@ using System.IO;
 using System.Linq;
 using Unity.VisualScripting;
 
-public class Parser
-{
-    public Spell spell {  get; set; }
-    public SpellModifier modifier { get; set; }
-}
+//public class Parser
+//{
+//    public Spell spell {  get; set; }
+//    public SpellModifier modifier { get; set; }
+//}
 
 public class Grimoire
 {
