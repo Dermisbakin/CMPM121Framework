@@ -79,6 +79,13 @@ public class PlayerController : MonoBehaviour
 
     }
 
+    void OnNextSpell(InputValue value)
+    {
+        if (spellcaster == null) return;
+        spellcaster.NextSpell();
+        spellui.SetSpell(spellcaster.spell);
+    }
+
     void OnAttack(InputValue value)
     {
         if (GameManager.Instance.state != GameManager.GameState.INWAVE) return;
