@@ -104,6 +104,7 @@ public class EnemySpawner : MonoBehaviour
         spawning = true;
 
         GameManager.Instance.wave = dict["wave"]; //update gamemanager
+        GameManager.Instance.player.GetComponent<PlayerController>().ScaleStats(dict["wave"]);
         GameManager.Instance.state = GameManager.GameState.COUNTDOWN;
         GameManager.Instance.countdown = 3;
         for (int i = 3; i > 0; i--)
