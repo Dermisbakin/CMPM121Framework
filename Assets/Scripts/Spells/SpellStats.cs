@@ -6,13 +6,10 @@ public class SpellStats
 {
     // value modifier lists
     public List<ValueModifier> damageMods = new List<ValueModifier>();
-    public List<ValueModifier> secondaryDamageMods = new List<ValueModifier>();
     public List<ValueModifier> manaCostMods = new List<ValueModifier>();
     public List<ValueModifier> cooldownMods = new List<ValueModifier>();
     public List<ValueModifier> speedMods = new List<ValueModifier>();
-    public List<ValueModifier> secondarySpeedMods = new List<ValueModifier>();
     public List<ValueModifier> lifetimeMods = new List<ValueModifier>();
-    public List<ValueModifier> secondaryLifetimeMods = new List<ValueModifier>();
 
     // behavior flags
     public bool isSplitter = false;
@@ -20,11 +17,11 @@ public class SpellStats
 
     public bool isDoubler = false;
     public float doubleDelay = 0.5f;
-
+     
 
     // trajectory override
     public string trajectoryOverride = null;
-    public string secondaryTrajectoryOverride = null;
+    //public string secondaryTrajectoryOverride = null;
 
 
     public bool isVampiric = false;
