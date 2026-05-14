@@ -1,11 +1,8 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Unity.VisualScripting;
 
 //public class Parser
 //{
@@ -26,7 +23,9 @@ public class Grimoire
 
     private static Grimoire theInstance;
 
-    public static Grimoire Instance { get
+    public static Grimoire Instance
+    {
+        get
         {
             if (theInstance == null)
                 theInstance = new Grimoire();
@@ -63,7 +62,6 @@ public class Grimoire
             .Children().Children()
             .ToList()
             .Where(s => s["mana_cost"] == null);
-        //add corresponding class to their respective lists (spells, modifiers)
         foreach (JToken token in spellTokens)
             spells.Add(token);
         foreach (JToken token in modTokens)
