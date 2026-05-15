@@ -175,7 +175,7 @@ public class Spell
 
         Vector3 direction = target - where;
 
-        float finalSpeed = ValueModifier.Apply(projectile.GetSpeed(), stats.speedMods);
+        float finalSpeed = ValueModifier.Apply(projectile.speed, stats.speedMods);
 
         string traj = stats.trajectoryOverride ?? projectile.trajectory ?? "straight";
 
