@@ -14,16 +14,28 @@ using static UnityEngine.UI.CanvasScaler;
 public class SpellProjectile
 {
     public string trajectory { get; set; }
-    public float speed { get; set; }
-    public float lifetime { get; set; }
+    private string speed_expr;    
+    private string lifetime_expr;  
     public int sprite { get; set; }
+
+    public float GetSpeed()
+    {
+        if (string.IsNullOrEmpty(speed_expr)) return 8f; 
+        return RPNEvaluator.RPNEvaluator.Evaluatef(speed_expr, GameManager.Instance.dictf);
+    }
+
+    public float GetLifetime()
+    {
+        if (string.IsNullOrEmpty(lifetime_expr)) return 0f;
+        return RPNEvaluator.RPNEvaluator.Evaluatef(lifetime_expr, GameManager.Instance.dictf);
+    }
 
     public SpellProjectile() { }
 
     public SpellProjectile(string speed, string lifetime = null)
     {
-        this.speed = RPNEvaluator.RPNEvaluator.Evaluatef(speed, GameManager.Instance.dictf);
-        if (lifetime != null) this.lifetime = RPNEvaluator.RPNEvaluator.Evaluatef(lifetime, GameManager.Instance.dictf);
+        this.speed_expr = speed;
+        this.lifetime_expr = lifetime;
     }
 }
 
@@ -177,25 +189,28 @@ public class Spell
 
         Vector3 direction = target - where;
 
-        float finalSpeed = ValueModifier.Apply(projectile.speed, stats.speedMods);
+        //float finalSpeed = ValueModifier.Apply(projectile.speed, stats.speedMods);
+        float baseSpeed = projectile.GetSpeed();
+        float finalSpeed = ValueModifier.Apply(baseSpeed, stats.speedMods);
 
         string traj = stats.trajectoryOverride ?? projectile.trajectory ?? "straight";
 
-        if (N != null && spray != null)
+        if (!string.IsNullOrEmpty(N) && !string.IsNullOrEmpty(spray))
         {
             int count = RPNEvaluator.RPNEvaluator.Evaluate(N, GameManager.Instance.dict);
-            float spreadAngle = RPNEvaluator.RPNEvaluator.Evaluatef(spray, GameManager.Instance.dict);
-            float halfSpread = spreadAngle * Mathf.Rad2Deg / 2f;
+            float spreadAngleRad = RPNEvaluator.RPNEvaluator.Evaluatef(spray, GameManager.Instance.dictf);
+            float halfSpreadDeg = spreadAngleRad * Mathf.Rad2Deg * 0.5f;
 
             for (int i = 0; i < count; i++)
             {
-                float angle = Random.Range(-halfSpread, halfSpread);
-                Vector3 spreadDir = Quaternion.Euler(0, 0, angle) * direction;
+                float t = count == 1 ? 0f : (float)i / (count - 1);
+                float angleOffset = Mathf.Lerp(-halfSpreadDeg, halfSpreadDeg, t);
+                Vector3 spreadDir = Quaternion.Euler(0, 0, angleOffset) * direction;
+
                 FireProjectile(where, spreadDir, traj, finalSpeed);
             }
-
             yield return new WaitForEndOfFrame();
-            yield break;
+            yield break; 
         }
 
         if (stats.isSplitter)
