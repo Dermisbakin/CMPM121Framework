@@ -42,7 +42,10 @@ public class ProjectileController : MonoBehaviour
             }
 
         }
-        Destroy(gameObject);
+        var stats = GameManager.Instance.player.GetComponent<PlayerController>()?.spellui?.spell?.stats;
+        if (stats == null || stats.isPiercing == false)
+            Destroy(gameObject);
+        else SetLifetime(10f);
     }
 
     public void SetLifetime(float lifetime)

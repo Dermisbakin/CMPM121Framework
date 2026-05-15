@@ -27,7 +27,7 @@ public class SpellStats
     public bool isVampiric = false;
     public bool isPiercing = false;
 
-    // names of all modifiers appliedd
+    // names of all modifiers applied
     public List<string> modifierNames = new List<string>();
 
 }
