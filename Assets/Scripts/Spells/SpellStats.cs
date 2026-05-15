@@ -29,4 +29,5 @@ public class SpellStats
 
     // names of all modifiers appliedd
     public List<string> modifierNames = new List<string>();
+
 }

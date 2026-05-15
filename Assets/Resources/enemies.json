@@ -3,14 +3,14 @@
        "name": "zombie",
        "sprite": 0,
        "hp": 20,
-       "speed": 7,
+       "speed": 6,
        "damage": 5
    },
    {
        "name": "skeleton",
        "sprite": 1,
        "hp": 30,
-       "speed": 9,
+       "speed": 8,
        "damage": 10
    },  
    {

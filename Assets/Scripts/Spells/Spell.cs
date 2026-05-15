@@ -39,7 +39,7 @@ public class Spell
     protected string N;
     protected string spray;
     protected Damage damage;
-    protected Damage secondary_damage;
+    protected string secondary_damage;
     protected string mana_cost;
     protected string cooldown;
     protected SpellProjectile projectile;
@@ -60,7 +60,7 @@ public class Spell
 
     public virtual void SetAttributes(string name)
     {
-        spellPage ??= Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
+        spellPage = Grimoire.Instance.GetPage(Grimoire.Chapter.SPELL, name);
         if (spellPage != null)
         {
             this.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
@@ -73,10 +73,6 @@ public class Spell
     public string GetName()
     {
         string result = this.name;
-        foreach (string mod in stats.modifierNames)
-        {
-            result = mod + " " + result;
-        }
         return result;
     }
 
@@ -96,7 +92,7 @@ public class Spell
 
     public int GetSecondaryDamage()
     {
-        float baseDmg = this.secondary_damage.amount;
+        float baseDmg = RPNEvaluator.RPNEvaluator.Evaluatef(this.secondary_damage, GameManager.Instance.dictf);
         return (int)ValueModifier.Apply(baseDmg, stats.damageMods);
         //return (int)baseDmg;
     }
@@ -131,7 +127,7 @@ public class Spell
     public void SetDamage(int damage, int secondaryDamage = 0)
     {
         this.damage.amount = damage;
-        this.secondary_damage.amount = secondaryDamage;
+        this.secondary_damage = secondaryDamage.ToString();
     }
 
     public void SetSpeed(float speed, float secondarySpeed = 0)
@@ -241,7 +237,7 @@ public class Spell
 
 public class SpellModifier : Spell
 {
-    private Spell decoratee;
+    public Spell decoratee;
 
     public string delay;
     public string angle;
@@ -263,6 +259,7 @@ public class SpellModifier : Spell
 
     public override void SetAttributes(string name)
     {
+        if(decoratee.GetName() != null && name.Contains(decoratee.GetName())) name = decoratee.GetName();
         JToken modPage = Grimoire.Instance.GetPage(Grimoire.Chapter.MODIFIER, name);
         if (modPage != null)
         {
@@ -273,7 +270,7 @@ public class SpellModifier : Spell
         else
         {
             try { decoratee.SetAttributes(name); }
-            catch { throw new ArgumentException($"Could not find a modifier of name \"{name}\"."); }
+            catch(ArgumentException e) { throw e; }
             //copy its values into SpellModifier/ set ownership
             IEnumerable<FieldInfo> fields = decoratee.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
                 .Where(x => x.GetValue(decoratee) != null);

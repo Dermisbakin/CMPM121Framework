@@ -1,7 +1,10 @@
 using Newtonsoft.Json.Linq;
+using NUnit.Framework.Interfaces;
 using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 //using UnityEditor.Experimental.GraphView;
 
@@ -48,11 +51,11 @@ public class SpellBuilder
         return result;
     }
 
-    private string NamePrepend(string name)
+    private string NamePrepend(string modName, string name)
     {
-        if (name.Contains("double")) name = "doubled " + name;
-        if (name.Contains("split")) name = "split " + name;
-        switch(sort(name))
+        if (modName.Contains("double")) name = "doubled " + name;
+        if (modName.Contains("split")) name = "split " + name;
+        switch(sort(modName))
         {
             case 1:
                 name = "damage-boosted " + name;
@@ -106,40 +109,40 @@ public class SpellBuilder
                 if (field.Name == "doubler") spell.IsDoubled++;
                 if (field.Name == "splitter") spell.IsSplit++;
                 //modify spell name
-                if (field.Name == "name") spell.SetName(field.Name + spell.GetName());
+                if (field.Name == "name") spell.SetName(NamePrepend(field.Name, field.GetValue(mod).ToString()));
                 if (field.Name != "name" && field.Name != "description")
                 {
                     switch (sort(field.Name))
                     {
                         case 1:
-                            spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
+                            spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.ADD, Evalf((string)field.GetValue(mod))));
                             break;
                         case 2:
-                            spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
+                            spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, Evalf((string)field.GetValue(mod))));
                             break;
                         case 3:
-                            spell.stats.speedMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
+                            spell.stats.speedMods.Add(new ValueModifier(ValueModifier.ModType.ADD, Evalf((string)field.GetValue(mod))));
                             break;
                         case 4:
-                            spell.stats.speedMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
+                            spell.stats.speedMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, Evalf((string)field.GetValue(mod))));
                             break;
                         case 5:
-                            spell.stats.lifetimeMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
+                            spell.stats.lifetimeMods.Add(new ValueModifier(ValueModifier.ModType.ADD, Evalf((string)field.GetValue(mod))));
                             break;
                         case 6:
-                            spell.stats.lifetimeMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
+                            spell.stats.lifetimeMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, Evalf((string)field.GetValue(mod))));
                             break;
                         case 7:
-                            spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
+                            spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.ADD, Evalf((string)field.GetValue(mod))));
                             break;
                         case 8:
-                            spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
+                            spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, Evalf((string)field.GetValue(mod))));
                             break;
                         case 9:
-                            spell.stats.cooldownMods.Add(new ValueModifier(ValueModifier.ModType.ADD, (float)field.GetValue(mod)));
+                            spell.stats.cooldownMods.Add(new ValueModifier(ValueModifier.ModType.ADD, Evalf((string)field.GetValue(mod))));
                             break;
                         case 10:
-                            spell.stats.cooldownMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, (float)field.GetValue(mod)));
+                            spell.stats.cooldownMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, Evalf((string)field.GetValue(mod))));
                             break;
                         default:
                             if (field.Name == "delay") delay = field.GetValue(mod).ToString();
@@ -152,14 +155,14 @@ public class SpellBuilder
         }
 
         //value initialization
-        //WithDelay(delay);
-        //WithAngle(angle);
+        if(delay != null) spell.stats.doubleDelay = Evalf(delay);
+        if (angle != null) spell.stats.splitAngle = Evalf(angle);
         //DmgMod(dmg, dmgf);
         //SpeedMod((int)speed, speedf);
         //LifetimeMod(lifetime, lifetimef);
         //ManaMod(mana, manaf);
         //CDMod(cooldown*cooldownf);
-        //TrajectoryMod(trajectory);
+        spell.stats.trajectoryOverride = trajectory;
 
         return spell;
     }
@@ -223,12 +226,20 @@ public class SpellBuilder
         return this;
     }
 
-    public void ApplyModifier(Spell spell, JToken modPage)
+    public void ApplyModifier(SpellModifier spell, JToken modPage)
     {
         if (modPage == null) return;
 
         string modName = modPage["name"]?.ToString() ?? "";
         spell.stats.modifierNames.Add(modName);
+
+        //moved renaming to here because it keeps breaking the updater
+        string result = spell.decoratee.GetName();
+        foreach (string mod in spell.stats.modifierNames)
+        {
+            result = mod + " " + result;
+        }
+        spell.SetName(result);
 
         Dictionary<string, int> d = GameManager.Instance.dict;
         if (spell.owner != null)
@@ -240,27 +251,27 @@ public class SpellBuilder
         // modifiers
         if (modPage["damage_multiplier"] != null)
         {
-            float val = RPNEvaluator.RPNEvaluator.Evaluatef(modPage["damage_multiplier"].ToString(), d);
+            float val = Evalf(modPage["damage_multiplier"].ToString());
             spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, val));
         }
         if (modPage["speed_multiplier"] != null)
         {
-            float val = RPNEvaluator.RPNEvaluator.Evaluatef(modPage["speed_multiplier"].ToString(), d);
+            float val = Evalf(modPage["speed_multiplier"].ToString());
             spell.stats.speedMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, val));
         }
         if (modPage["mana_multiplier"] != null)
         {
-            float val = RPNEvaluator.RPNEvaluator.Evaluatef(modPage["mana_multiplier"].ToString(), d);
+            float val = Evalf(modPage["mana_multiplier"].ToString());
             spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, val));
         }
         if (modPage["mana_adder"] != null)
         {
-            float val = RPNEvaluator.RPNEvaluator.Evaluatef(modPage["mana_adder"].ToString(), d);
+            float val = Evalf(modPage["mana_adder"].ToString());
             spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.ADD, val));
         }
         if (modPage["cooldown_multiplier"] != null)
         {
-            float val = RPNEvaluator.RPNEvaluator.Evaluatef(modPage["cooldown_multiplier"].ToString(), d);
+            float val = Evalf(modPage["cooldown_multiplier"].ToString());
             spell.stats.cooldownMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, val));
         }
 
@@ -272,12 +283,12 @@ public class SpellBuilder
         if (modPage["angle"] != null)
         {
             spell.stats.isSplitter = true;
-            spell.stats.splitAngle = RPNEvaluator.RPNEvaluator.Evaluatef(modPage["angle"].ToString(), d);
+            spell.stats.splitAngle = Evalf(modPage["angle"].ToString());
         }
         if (modPage["delay"] != null)
         {
             spell.stats.isDoubler = true;
-            spell.stats.doubleDelay = RPNEvaluator.RPNEvaluator.Evaluatef(modPage["delay"].ToString(), d);
+            spell.stats.doubleDelay = Evalf(modPage["delay"].ToString());
         }
     }
 
@@ -314,7 +325,7 @@ public class SpellBuilder
         int idx = Random.Range(0, baseSpells.Count);
         JToken basePage = baseSpells[idx];
 
-        Spell spell = new Spell(owner);
+        spell = new SpellModifier(owner);
         spell.SetAttributes(basePage["name"].ToString());
 
         List<JToken> jsonMods = Grimoire.Instance.modifiers;
@@ -335,7 +346,6 @@ public class SpellBuilder
             }
             modCount++;
         }
-
         return spell;
     }
 

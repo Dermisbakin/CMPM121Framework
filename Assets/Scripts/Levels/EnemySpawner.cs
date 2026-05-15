@@ -69,7 +69,8 @@ public class EnemySpawner : MonoBehaviour
         GameManager.Instance.NewRun(levelname, level == null ? 0 : level.waves);
         GameManager.Instance.state = GameManager.GameState.COUNTDOWN;
         dict["wave"] = 1;
-        
+        dictf["wave"] = 1;
+
         StartCoroutine(SpawnWave());
     }
 
@@ -142,6 +143,7 @@ public class EnemySpawner : MonoBehaviour
         {
             GameManager.Instance.state = GameManager.GameState.WAVEEND;
             dict["wave"]++;
+            dictf["wave"]++;
         }
         spawning = false;
     }
