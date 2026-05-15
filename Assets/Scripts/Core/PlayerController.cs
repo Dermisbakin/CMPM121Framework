@@ -79,10 +79,17 @@ public class PlayerController : MonoBehaviour
 
     }
 
-    void OnNextSpell(InputValue value)
+    void OnNext(InputValue value)
     {
         if (spellcaster == null) return;
         spellcaster.NextSpell();
+        spellui.SetSpell(spellcaster.spell);
+    }
+
+    void OnPrevious(InputValue value)
+    {
+        if (spellcaster == null) return;
+        spellcaster.PrevSpell();
         spellui.SetSpell(spellcaster.spell);
     }
 

@@ -170,7 +170,7 @@ public class SpellBuilder
     //builder components, parameters (adderVal,multiplierVal)
     public SpellBuilder WithDelay(string delay)
     {
-        if (spell.owner != null) spell.delay = delay;
+        if (spell.owner != null) spell.stats.doubleDelay = Evalf(delay);
         else throw new System.InvalidOperationException("No spell owner: start with \".Build()\" first.");
         return this;
     }
@@ -178,54 +178,55 @@ public class SpellBuilder
     public SpellBuilder WithAngle(string angle)
     {
         int newAngle = (int)Evalf(angle);
-        if (spell.owner != null) spell.SetSpray(newAngle);
+        if (spell.owner != null) spell.stats.splitAngle = Evalf(angle);
         else throw new System.InvalidOperationException("No spell owner: start with \".Build()\" first.");
         return this;
     }
     public SpellBuilder DmgMod(int add, float multi = 1f)
     {
-        int total = (int)((spell.GetDamage() + add) * multi);
-        int secondaryTotal = (int)((spell.GetSecondaryDamage() + add) * multi);
-        if (spell.owner != null) spell.SetDamage(total, secondaryTotal);
-        else throw new System.InvalidOperationException("No spell owner: start with \".Build()\" first.");
+        spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.ADD, add));
+        spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, multi));
         return this;
     }
 
     public SpellBuilder SpeedMod(float speed1, float speed2 = 0f)
     {
-        if (spell.owner != null) spell.SetSpeed(speed1, speed2);
-        else throw new System.InvalidOperationException("No spell owner: start with \".Build()\" first.");
+        spell.stats.speedMods.Add(new ValueModifier(ValueModifier.ModType.ADD, speed1));
+        spell.stats.speedMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, speed2));
         return this;
     }
 
     public SpellBuilder LifetimeMod(float lifetime1, float lifetime2 = 0f)
     {
-        if (spell.owner != null) spell.SetLifetime(lifetime1, lifetime2);
-        else throw new System.InvalidOperationException("No spell owner: start with \".Build()\" first.");
+        spell.stats.lifetimeMods.Add(new ValueModifier(ValueModifier.ModType.ADD, lifetime1));
+        spell.stats.lifetimeMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, lifetime2));
         return this;
     }
 
     public SpellBuilder ManaMod(int manaAdder, float manaMulti = 1f)
     {
-        if (spell.owner != null) spell.SetMana((int)((spell.GetManaCost() + manaAdder) * manaMulti));
-        else throw new System.InvalidOperationException("No spell owner: start with \".Build()\" first.");
+        spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.ADD, manaAdder));
+        spell.stats.manaCostMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, manaMulti));
         return this;
     }
 
     public SpellBuilder CDMod(float cooldown)
     {
-        if (spell.owner != null) spell.SetCooldown(cooldown);
-        else throw new System.InvalidOperationException("No spell owner: start with \".Build()\" first.");
+        spell.stats.cooldownMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, cooldown));
         return this;
     }
 
-    public SpellBuilder TrajectoryMod(string traj1, string traj2 = "")
+    public SpellBuilder TrajectoryMod(string traj1)
     {
-        if (spell.owner != null) spell.SetTrajectory(traj1, traj2);
-        else throw new System.InvalidOperationException("No spell owner: start with \".Build()\" first.");
+        spell.stats.trajectoryOverride = traj1;
         return this;
     }
 
+    public SpellBuilder WithTrait(string trait)
+    {
+        ApplyCustomModifier(spell, trait);
+        return this;
+    }
     public void ApplyModifier(SpellModifier spell, JToken modPage)
     {
         if (modPage == null) return;
