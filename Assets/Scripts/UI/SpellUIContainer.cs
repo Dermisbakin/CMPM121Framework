@@ -28,7 +28,7 @@ public class SpellUIContainer : MonoBehaviour
             {
                 SpellUI sui = spellUIs[i].GetComponent<SpellUI>();
                 if (sui.spell != player.spellcaster.spells[i])
-                    sui.SetSpell(player.spellcaster.spells[i]);
+                    sui.SetSpell(player.spellcaster.spells[i], i);
 
                 // highlight active spell
                 sui.highlight.SetActive(i == player.spellcaster.activeSpellIndex);

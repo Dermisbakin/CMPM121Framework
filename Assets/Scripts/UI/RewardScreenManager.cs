@@ -130,16 +130,43 @@ public class RewardScreenManager : MonoBehaviour
 
         SpellCaster sc = GameManager.Instance.player.GetComponent<PlayerController>().spellcaster;
 
-        if (!sc.EquipSpell(pendingSpell))
+        if (sc.EquipSpell(pendingSpell))
         {
-            sc.DropSpell(0);
-            sc.EquipSpell(pendingSpell);
+            pendingSpell = null;
+            spellInfoText.text = "Spell equipped!";
+            takeButton.SetActive(false);
+            skipButton.SetActive(false);
         }
+        else
+        {
 
-        pendingSpell = null;
-        spellInfoText.text = "Spell equipped!";
-        takeButton.SetActive(false);
-        skipButton.SetActive(false);
+            spellInfoText.text = "Spell slots full! Drop a spell to make room.";
+            takeButton.SetActive(false);
+
+            PlayerController pc = GameManager.Instance.player.GetComponent<PlayerController>();
+            SpellUIContainer container = GameObject.FindObjectOfType<SpellUIContainer>();
+            if (container != null)
+            {
+                for (int i = 0; i < container.spellUIs.Length; i++)
+                {
+                    SpellUI sui = container.spellUIs[i].GetComponent<SpellUI>();
+                    if (sui != null && sui.dropbutton != null)
+                    {
+                        int capturedIndex = i;
+                        UnityEngine.UI.Button btn = sui.dropbutton.GetComponent<UnityEngine.UI.Button>();
+                        btn.onClick.RemoveAllListeners();
+                        btn.onClick.AddListener(() =>
+                        {
+                            pc.spellcaster.DropSpell(capturedIndex);
+                            pc.spellcaster.EquipSpell(pendingSpell);
+                            pendingSpell = null;
+                            spellInfoText.text = "Spell equipped!";
+                            skipButton.SetActive(false);
+                        });
+                    }
+                }
+            }
+        }
     }
 
     void SkipSpell()
