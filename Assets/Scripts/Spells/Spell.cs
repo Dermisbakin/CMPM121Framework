@@ -23,16 +23,6 @@ public class SpellProjectile
         this.speed = RPNEvaluator.RPNEvaluator.Evaluatef(speed, GameManager.Instance.dictf);
         if (lifetime != null) this.lifetime = RPNEvaluator.RPNEvaluator.Evaluatef(lifetime, GameManager.Instance.dictf);
     }
-
-    public float GetSpeed()
-    {
-        return speed;
-    }
-
-    public float GetLifetime()
-    {
-        return lifetime;
-    }
 }
 
 [JsonObject(MemberSerialization = MemberSerialization.Fields)]
@@ -222,19 +212,12 @@ public class Spell
 
     protected void FireProjectile(Vector3 where, Vector3 direction, string trajectory, float speed)
     {
-        float lt = projectile.GetLifetime();
-        if (lt > 0)
+        if (projectile.lifetime > 0)
         {
-            lt = ValueModifier.Apply(lt, stats.lifetimeMods);
+            float lt = ValueModifier.Apply(projectile.lifetime, stats.lifetimeMods);
             GameManager.Instance.projectileManager.CreateProjectile(
                 projectile.sprite, trajectory, where, direction, speed, OnHit, lt);
         }
-        //if (projectile.lifetime > 0)
-        //{
-        //    float lt = ValueModifier.Apply(projectile.lifetime, stats.lifetimeMods);
-        //    GameManager.Instance.projectileManager.CreateProjectile(
-        //        projectile.sprite, trajectory, where, direction, speed, OnHit, lt);
-        //}
         else
         {
             GameManager.Instance.projectileManager.CreateProjectile(
