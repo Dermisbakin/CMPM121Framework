@@ -18,29 +18,10 @@ public class SpellProjectile
     public float lifetime { get; set; }
     public int sprite { get; set; }
 
-    //public SpellProjectile(string speed, string lifetime = null)
-    //{
-    //    this.speed = RPNEvaluator.RPNEvaluator.Evaluatef(speed, GameManager.Instance.dictf);
-    //    if (lifetime != null) this.lifetime = RPNEvaluator.RPNEvaluator.Evaluatef(lifetime, GameManager.Instance.dictf);
-    //}
-    public SpellProjectile() { }
-
     public SpellProjectile(string speed, string lifetime = null)
     {
-        this.speed = speed;
-        this.lifetime = lifetime;
-    }
-
-    public float GetSpeed()
-    {
-        if (speed == null) return 8f;
-        return RPNEvaluator.RPNEvaluator.Evaluatef(speed, GameManager.Instance.dict);
-    }
-
-    public float GetLifetime()
-    {
-        if (lifetime == null) return 0f;
-        return RPNEvaluator.RPNEvaluator.Evaluatef(lifetime, GameManager.Instance.dict);
+        this.speed = RPNEvaluator.RPNEvaluator.Evaluatef(speed, GameManager.Instance.dictf);
+        if (lifetime != null) this.lifetime = RPNEvaluator.RPNEvaluator.Evaluatef(lifetime, GameManager.Instance.dictf);
     }
 }
 
@@ -151,10 +132,10 @@ public class Spell
 
     public void SetSpeed(float speed, float secondarySpeed = 0)
     {
-        //this.projectile.speed = speed;
-        this.projectile.speed = speed.ToString();
-        //this.secondary_projectile.speed = secondarySpeed;
-        this.secondary_projectile.speed = secondarySpeed.ToString();
+        this.projectile.speed = speed;
+        //this.projectile.speed = speed.ToString();
+        this.secondary_projectile.speed = secondarySpeed;
+        //this.secondary_projectile.speed = secondarySpeed.ToString();
     }
 
     public void SetTrajectory(string trajectory, string secondTrajectory = "")
@@ -165,10 +146,10 @@ public class Spell
 
     public void SetLifetime(float lifetime, float secondLifetime = 0f)
     {
-        //this.projectile.lifetime = lifetime;
-        //this.secondary_projectile.lifetime = secondLifetime;
-        this.projectile.lifetime = lifetime.ToString();
-        this.secondary_projectile.lifetime = secondLifetime.ToString();
+        this.projectile.lifetime = lifetime;
+        this.secondary_projectile.lifetime = secondLifetime;
+        //this.projectile.lifetime = lifetime.ToString();
+        //this.secondary_projectile.lifetime = secondLifetime.ToString();
     }
 
     public void SetMana(int manaCost)
@@ -198,8 +179,8 @@ public class Spell
 
         Vector3 direction = target - where;
 
-        //float finalSpeed = ValueModifier.Apply(projectile.speed, stats.speedMods);
-        float finalSpeed = ValueModifier.Apply(projectile.GetSpeed(), stats.speedMods);
+        float finalSpeed = ValueModifier.Apply(projectile.speed, stats.speedMods);
+        //float finalSpeed = ValueModifier.Apply(projectile.GetSpeed(), stats.speedMods);
 
         string traj = stats.trajectoryOverride ?? projectile.trajectory ?? "straight";
 
@@ -236,19 +217,12 @@ public class Spell
 
     protected void FireProjectile(Vector3 where, Vector3 direction, string trajectory, float speed)
     {
-        float lt = projectile.GetLifetime();
-        if (lt > 0)
+        if (projectile.lifetime > 0)
         {
-            lt = ValueModifier.Apply(lt, stats.lifetimeMods);
+            float lt = ValueModifier.Apply(projectile.lifetime, stats.lifetimeMods);
             GameManager.Instance.projectileManager.CreateProjectile(
                 projectile.sprite, trajectory, where, direction, speed, OnHit, lt);
         }
-        //if (projectile.lifetime > 0)
-        //{
-        //    float lt = ValueModifier.Apply(projectile.lifetime, stats.lifetimeMods);
-        //    GameManager.Instance.projectileManager.CreateProjectile(
-        //        projectile.sprite, trajectory, where, direction, speed, OnHit, lt);
-        //}
         else
         {
             GameManager.Instance.projectileManager.CreateProjectile(
