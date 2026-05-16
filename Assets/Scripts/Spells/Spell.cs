@@ -179,6 +179,24 @@ public class Spell
 
         string traj = stats.trajectoryOverride ?? projectile.trajectory ?? "straight";
 
+        if (N != null && spray != null)
+        {
+            int count = RPNEvaluator.RPNEvaluator.Evaluate(N, GameManager.Instance.dict);
+            float spreadAngle = RPNEvaluator.RPNEvaluator.Evaluatef(spray, GameManager.Instance.dictf);
+            //float spreadAngle = RPNEvaluator.RPNEvaluator.Evaluatef(spray, GameManager.Instance.dict);
+            float halfSpread = spreadAngle * Mathf.Rad2Deg / 2f;
+
+            for (int i = 0; i < count; i++)
+            {
+                float angle = UnityEngine.Random.Range(-halfSpread, halfSpread);
+                Vector3 spreadDir = Quaternion.Euler(0, 0, angle) * direction;
+                FireProjectile(where, spreadDir, traj, finalSpeed);
+            }
+
+            yield return new WaitForEndOfFrame();
+            yield break;
+        }
+
         if (stats.isSplitter)
         {
             Vector3 dir1 = Quaternion.Euler(0, 0, stats.splitAngle) * direction;
