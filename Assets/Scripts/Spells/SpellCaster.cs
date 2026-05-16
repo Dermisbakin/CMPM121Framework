@@ -38,7 +38,8 @@ public class SpellCaster
         this.spells = new List<Spell>();
         this.activeSpellIndex = 0;
 
-        Spell starter = new SpellBuilder().Seed(this, "Magic Missile").DmgMod(10,10f).ManaMod(0,0.05f).CDMod(0.01f).WithTrait("piercing").Build();
+        Spell starter = new SpellBuilder().Seed(this, "Arcane Bolt").Build();
+        //super secret admin modifications: .Seed(this, "Arcane Spray").DmgMod(10,10f).ManaMod(0,0.05f).CDMod(0.01f).Build();
         spells.Add(starter);
     }
 

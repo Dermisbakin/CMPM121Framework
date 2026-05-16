@@ -6,6 +6,7 @@ public class ProjectileController : MonoBehaviour
 {
     public float lifetime;
     public event Action<Hittable,Vector3> OnHit;
+    public event Action<GameObject, Vector3> OnDestroy;
     public ProjectileMovement movement;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -44,7 +45,10 @@ public class ProjectileController : MonoBehaviour
         }
         var stats = GameManager.Instance.player.GetComponent<PlayerController>()?.spellui?.spell?.stats;
         if (stats == null || stats.isPiercing == false)
-            Destroy(gameObject);
+        {
+            if (OnDestroy != null) OnDestroy(gameObject, transform.position);
+            else Destroy(gameObject);
+        }
         else SetLifetime(10f);
     }
 

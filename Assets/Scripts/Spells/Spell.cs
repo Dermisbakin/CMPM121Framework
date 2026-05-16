@@ -212,24 +212,39 @@ public class Spell
 
     protected void FireProjectile(Vector3 where, Vector3 direction, string trajectory, float speed)
     {
-        if (projectile.lifetime > 0)
-        {
-            float lt = ValueModifier.Apply(projectile.lifetime, stats.lifetimeMods);
-            GameManager.Instance.projectileManager.CreateProjectile(
-                projectile.sprite, trajectory, where, direction, speed, OnHit, lt);
-        }
-        else
-        {
-            GameManager.Instance.projectileManager.CreateProjectile(
-                projectile.sprite, trajectory, where, direction, speed, OnHit);
-        }
+        int amount = 1;
+        if (N != null) amount = (int)RPNEvaluator.RPNEvaluator.Evaluatef(N, GameManager.Instance.dictf);
+        float lt = ValueModifier.Apply(projectile.lifetime, stats.lifetimeMods);
+        float angle = 0f;
+        if (spray != null) angle = RPNEvaluator.RPNEvaluator.Evaluatef(spray, GameManager.Instance.dictf);
+        GameManager.Instance.projectileManager.CreateProjectile(
+            projectile.sprite, trajectory, where, direction, speed, OnHit, OnDestroy, lt, amount, angle);
     }
 
-    protected void OnHit(Hittable other, Vector3 impact)
+    void OnHit(Hittable other, Vector3 impact)
     {
         if (other.team != team)
         {
             other.Damage(new Damage(GetDamage(), damage.type));
+        }
+    }
+
+    void OnDestroy(GameObject bullet, Vector3 where)
+    {
+        UnityEngine.Object.Destroy(bullet);
+        
+        string traj = stats.trajectoryOverride ?? projectile.trajectory ?? "straight";
+        if (secondary_damage != null && N != null)
+        {
+            int shrapnel = (int)RPNEvaluator.RPNEvaluator.Evaluatef(N, GameManager.Instance.dictf);
+            float lt = ValueModifier.Apply(secondary_projectile.lifetime, stats.speedMods);
+            float trueSpeed = ValueModifier.Apply(secondary_projectile.speed, stats.speedMods);
+            for (int i = 0; i < shrapnel; i++)
+            {
+                Vector3 direction = UnityEngine.Random.onUnitSphere;
+                GameManager.Instance.projectileManager.CreateProjectile(
+                        projectile.sprite, traj, where, direction, trueSpeed, OnHit, null, lt);
+            }
         }
     }
 
