@@ -38,8 +38,9 @@ public class SpellCaster
         this.spells = new List<Spell>();
         this.activeSpellIndex = 0;
 
+        //traits: doubled, split, vampiric, piercing, rapid
         Spell starter = new SpellBuilder().Seed(this, "Arcane Bolt").Build();
-        //super secret admin modifications: .Seed(this, "Arcane Spray").DmgMod(10,10f).ManaMod(0,0.05f).CDMod(0.01f).Build();
+        //super secret admin modifications: .Seed(this, "Magic Missile").DmgMod(10,10f).ManaMod(0,0.05f).CDMod(0.01f).WithTrait("split", 3).WithTrait("vampiric").Build();
         spells.Add(starter);
     }
 

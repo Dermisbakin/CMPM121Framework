@@ -106,8 +106,8 @@ public class SpellBuilder
             IEnumerable<FieldInfo> fields = mod.GetType().GetFields().Where(x => x.GetValue(mod) != null);
             foreach (FieldInfo field in fields)
             {
-                if (field.Name == "doubler") spell.IsDoubled++;
-                if (field.Name == "splitter") spell.IsSplit++;
+                if (field.Name == "doubler") spell.stats.isDoubler++;
+                if (field.Name == "splitter") spell.stats.isSplitter++;
                 //modify spell name
                 if (field.Name == "name") spell.SetName(NamePrepend(field.Name, field.GetValue(mod).ToString()));
                 if (field.Name != "name" && field.Name != "description")
@@ -222,9 +222,9 @@ public class SpellBuilder
         return this;
     }
 
-    public SpellBuilder WithTrait(string trait)
+    public SpellBuilder WithTrait(string trait, int number = 0)
     {
-        ApplyCustomModifier(spell, trait);
+        ApplyCustomModifier(spell, trait, number);
         return this;
     }
     public void ApplyModifier(SpellModifier spell, JToken modPage)
@@ -283,19 +283,19 @@ public class SpellBuilder
         }
         if (modPage["angle"] != null)
         {
-            spell.stats.isSplitter = true;
+            spell.stats.isSplitter++;
             spell.stats.splitAngle = Evalf(modPage["angle"].ToString());
         }
         if (modPage["delay"] != null)
         {
-            spell.stats.isDoubler = true;
+            spell.stats.isDoubler++;
             spell.stats.doubleDelay = Evalf(modPage["delay"].ToString());
         }
     }
 
     // custom modifiers
     // as required, 3
-    public void ApplyCustomModifier(Spell spell, string modName)
+    public void ApplyCustomModifier(Spell spell, string modName, int number = 0)
     {
         spell.stats.modifierNames.Add(modName);
 
@@ -314,6 +314,16 @@ public class SpellBuilder
         {
             spell.stats.cooldownMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, 0.4f));
             spell.stats.damageMods.Add(new ValueModifier(ValueModifier.ModType.MULTIPLY, 0.6f));
+        }
+        else if (modName == "doubled") //allowing manual customization
+        {
+            if (number != 0) spell.stats.isDoubler += number;
+            else spell.stats.isDoubler++;
+        }
+        else if (modName == "split")
+        {
+            if (number != 0) spell.stats.isSplitter += number;
+            else spell.stats.isSplitter++;
         }
     }
 

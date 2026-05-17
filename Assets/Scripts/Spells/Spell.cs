@@ -45,7 +45,9 @@ public class Spell
     protected SpellProjectile projectile;
     protected SpellProjectile secondary_projectile;
 
-    protected JToken spellPage;                 // removed static 
+    private bool isPrimary = true; //bool to switch between projectiles
+
+    protected JToken spellPage;
 
     public Spell(SpellCaster owner)
     {
@@ -179,18 +181,27 @@ public class Spell
 
         string traj = stats.trajectoryOverride ?? projectile.trajectory ?? "straight";
 
-        if (stats.isSplitter)
+        if (stats.isSplitter != 0)
         {
-            Vector3 dir1 = Quaternion.Euler(0, 0, stats.splitAngle) * direction;
-            Vector3 dir2 = Quaternion.Euler(0, 0, -stats.splitAngle) * direction;
-            FireProjectile(where, dir1, traj, finalSpeed);
-            FireProjectile(where, dir2, traj, finalSpeed);
+            float angleUp = 0f;
+            float angleDown = 0f;
+            for (int i = 0; i < stats.isSplitter; i++)
+            {
+                Vector3 dir1 = Quaternion.Euler(0, 0, angleUp + stats.splitAngle) * direction;
+                Vector3 dir2 = Quaternion.Euler(0, 0, angleDown - stats.splitAngle) * direction;
+                FireProjectile(where, dir1, traj, finalSpeed);
+                FireProjectile(where, dir2, traj, finalSpeed);
+            }
         }
-        else if (stats.isDoubler)
+        else if (stats.isDoubler != 0)
         {
-            FireProjectile(where, direction, traj, finalSpeed);
-            yield return new WaitForSeconds(stats.doubleDelay);
-            FireProjectile(where, direction, traj, finalSpeed);
+            for (int i = 0; i < stats.isDoubler; i++)
+            {
+                FireProjectile(where, direction, traj, finalSpeed);
+                yield return new WaitForSeconds(stats.doubleDelay);
+                FireProjectile(where, direction, traj, finalSpeed);
+                yield return new WaitForSeconds(stats.doubleDelay);
+            }
         }
         else
         {
@@ -225,20 +236,23 @@ public class Spell
     {
         if (other.team != team)
         {
-            other.Damage(new Damage(GetDamage(), damage.type));
+            if(isPrimary) other.Damage(new Damage(GetDamage(), damage.type));
+            else other.Damage(new Damage(GetSecondaryDamage(), damage.type));
         }
     }
 
     void OnDestroy(GameObject bullet, Vector3 where)
     {
-        UnityEngine.Object.Destroy(bullet);
+        float lt = bullet.GetComponent<ProjectileController>().lifetime;
+        if(stats.isPiercing == false) UnityEngine.Object.Destroy(bullet);
         
         string traj = stats.trajectoryOverride ?? projectile.trajectory ?? "straight";
         if (secondary_damage != null && N != null)
         {
             int shrapnel = (int)RPNEvaluator.RPNEvaluator.Evaluatef(N, GameManager.Instance.dictf);
-            float lt = ValueModifier.Apply(secondary_projectile.lifetime, stats.speedMods);
+            lt = ValueModifier.Apply(secondary_projectile.lifetime, stats.speedMods);
             float trueSpeed = ValueModifier.Apply(secondary_projectile.speed, stats.speedMods);
+            isPrimary = false;
             for (int i = 0; i < shrapnel; i++)
             {
                 Vector3 direction = UnityEngine.Random.onUnitSphere;

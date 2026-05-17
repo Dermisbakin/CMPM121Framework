@@ -12,10 +12,10 @@ public class SpellStats
     public List<ValueModifier> lifetimeMods = new List<ValueModifier>();
 
     // behavior flags
-    public bool isSplitter = false;
+    public int isSplitter = 0;
     public float splitAngle = 10f;
 
-    public bool isDoubler = false;
+    public int isDoubler = 0;
     public float doubleDelay = 0.5f;
      
 

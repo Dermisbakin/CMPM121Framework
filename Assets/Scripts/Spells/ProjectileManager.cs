@@ -28,7 +28,6 @@ public class ProjectileManager : MonoBehaviour
                 spray = UnityEngine.Random.Range(-spray/2, spray/2);
                 Quaternion randomdir = Quaternion.AngleAxis(spray, Vector3.forward);
                 direction = randomdir * direction;
-                Debug.Log(direction);
             }
             GameObject new_projectile = Instantiate(projectiles[which], where + direction.normalized * 1.1f, Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg));
             new_projectile.GetComponent<ProjectileController>().movement = MakeMovement(trajectory, speed);
