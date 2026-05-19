@@ -10,7 +10,7 @@
        "name": "skeleton",
        "sprite": 1,
        "hp": 10,
-       "speed": 8,
+       "speed": 7,
        "damage": 10
    },  
    {

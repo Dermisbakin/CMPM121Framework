@@ -187,8 +187,10 @@ public class Spell
             float angleDown = 0f;
             for (int i = 0; i < stats.isSplitter; i++)
             {
-                Vector3 dir1 = Quaternion.Euler(0, 0, angleUp + stats.splitAngle) * direction;
-                Vector3 dir2 = Quaternion.Euler(0, 0, angleDown - stats.splitAngle) * direction;
+                angleUp += stats.splitAngle;
+                angleDown -= stats.splitAngle;
+                Vector3 dir1 = Quaternion.Euler(0, 0, angleUp) * direction;
+                Vector3 dir2 = Quaternion.Euler(0, 0, angleDown) * direction;
                 FireProjectile(where, dir1, traj, finalSpeed);
                 FireProjectile(where, dir2, traj, finalSpeed);
             }
