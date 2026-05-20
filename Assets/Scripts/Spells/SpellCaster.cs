@@ -51,6 +51,10 @@ public class SpellCaster
         {
             mana -= s.GetManaCost();
             yield return s.Cast(where, target, team);
+            // TODO
+            // Revise addition
+
+            //fire EventBus.Instance.DoSpellCast()
         }
         yield break;
     }

@@ -19,6 +19,11 @@ public class EventBus
     public void DoDamage(Vector3 where, Damage dmg, Hittable target)
     {
         OnDamage?.Invoke(where, dmg, target);
+        // TODO
+        // add OnPlayerDamaged event (Vector3 position, Damage dmg)
+        // add OnEnemyKilled event (GameObject enemy)
+        //add onSpellCast event()
+        // more...
     }
 
 }
