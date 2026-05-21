@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-public class RelicTrigger
+public class RelicTrigger : EventBus
 {
     public Action OnTriggered;
 

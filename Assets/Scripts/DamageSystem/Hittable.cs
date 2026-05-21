@@ -15,10 +15,12 @@ public class Hittable
     public void Damage(Damage damage)
     {
         EventBus.Instance.DoDamage(owner.transform.position, damage, this);
-        // TODO
 
-        // if this hittable is on the PLAYER team
-        // fire EventBus.Instance.DoPlayerDamaged
+        if(this.team == Team.PLAYER)
+        {
+            EventBus.Instance.DoPlayerDamaged(owner.transform.position, damage);
+        }
+
         hp -= damage.amount;
         if (hp <= 0)
         {

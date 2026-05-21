@@ -46,6 +46,12 @@ public class GameManager
     private List<GameObject> enemies;
     public int enemy_count { get { return enemies.Count; } }
 
+    public void Define(string key, float value)
+    {
+        dict[key] = (int)value;
+        dictf[key] = value;
+    }
+
     public void AddEnemy(GameObject enemy)
     {
         enemies.Add(enemy);
