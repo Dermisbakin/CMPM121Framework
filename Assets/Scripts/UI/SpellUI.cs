@@ -30,7 +30,7 @@ public class SpellUI : MonoBehaviour
     void Update()
     {
         if (spell == null) return;
-        if(GameManager.Instance.state == GameManager.GameState.WAVEEND) spell.SetAttributes(spell.GetName());
+        //if(GameManager.Instance.state == GameManager.GameState.WAVEEND) spell.SetAttributes(spell.GetName());
         if (Time.time > last_text_update + UPDATE_DELAY)
         {
             manacost.text = spell.GetManaCost().ToString();
