@@ -111,6 +111,7 @@ public class EnemyController : MonoBehaviour
             GameManager.Instance.RemoveEnemy(gameObject);
             // Todo
             // add fire EventBus.Instance.DoEnemyKilled(gameObject)
+            EventBus.Instance.DoEnemyKilled(gameObject);
             Destroy(gameObject);
         }
     }

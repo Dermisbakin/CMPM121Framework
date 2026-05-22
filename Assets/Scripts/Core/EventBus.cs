@@ -45,5 +45,10 @@ public class EventBus
     {
         OnSpellCast?.Invoke();
     }
-
+    //  Required for Iron Heart custom relic
+    public event Action<int> OnWaveStart;
+    public void DoWaveStart(int waveNumber)
+    {
+        OnWaveStart?.Invoke(waveNumber);
+    }
 }

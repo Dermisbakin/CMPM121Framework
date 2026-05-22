@@ -14,12 +14,12 @@ public class TakeDamageTrigger : RelicTrigger
 {
     public override void Register()
     {
-        // EventBus.Instance.OnPlayerDamaged += HandlePlayerDamaged;
+        EventBus.Instance.OnPlayerDamaged += HandlePlayerDamaged;
     }
 
     public override void Unregister()
     {
-        // EventBus.Instance.OnPlayerDamaged -= HandlePlayerDamaged;
+        EventBus.Instance.OnPlayerDamaged -= HandlePlayerDamaged;
     }
 
     void HandlePlayerDamaged(Vector3 pos, Damage dmg)
@@ -91,12 +91,12 @@ public class OnKillTrigger : RelicTrigger
 {
     public override void Register()
     {
-        // EventBus.Instance.OnEnemyKilled += HandleEnemyKilled;
+        EventBus.Instance.OnEnemyKilled += HandleEnemyKilled;
     }
 
     public override void Unregister()
     {
-        // EventBus.Instance.OnEnemyKilled -= HandleEnemyKilled;
+        EventBus.Instance.OnEnemyKilled -= HandleEnemyKilled;
     }
 
     void HandleEnemyKilled(GameObject enemy)
@@ -109,12 +109,12 @@ public class OnCastTrigger : RelicTrigger
 {
     public override void Register()
     {
-        // EventBus.Instance.OnSpellCast += HandleSpellCast;
+        EventBus.Instance.OnSpellCast += HandleSpellCast;
     }
 
     public override void Unregister()
     {
-        // EventBus.Instance.OnSpellCast -= HandleSpellCast;
+        EventBus.Instance.OnSpellCast -= HandleSpellCast;
     }
 
     void HandleSpellCast()
@@ -127,12 +127,12 @@ public class OnWaveStartTrigger : RelicTrigger
 {
     public override void Register()
     {
-        // EventBus.Instance.OnWaveStart += HandleWaveStart;
+        EventBus.Instance.OnWaveStart += HandleWaveStart;
     }
 
     public override void Unregister()
     {
-        // EventBus.Instance.OnWaveStart -= HandleWaveStart;
+        EventBus.Instance.OnWaveStart -= HandleWaveStart;
     }
 
     void HandleWaveStart(int waveNumber)

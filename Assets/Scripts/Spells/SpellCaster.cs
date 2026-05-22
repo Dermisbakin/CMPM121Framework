@@ -55,6 +55,7 @@ public class SpellCaster
             // Revise addition
 
             //fire EventBus.Instance.DoSpellCast()
+            EventBus.Instance.DoSpellCast();
         }
         yield break;
     }
