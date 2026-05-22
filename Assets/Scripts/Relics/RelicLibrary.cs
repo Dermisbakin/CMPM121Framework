@@ -82,8 +82,8 @@ public class RelicLibrary
                 return new OnKillTrigger();
             case "cast-spell":
                 return new OnCastTrigger();
-            case "move":
-                return new OnMoveTrigger();
+            //case "move":
+            //    return new OnMoveTrigger();
             case "wave-start":
                 return new OnWaveStartTrigger();
             default:

@@ -33,7 +33,7 @@ public class StandStillTrigger : RelicTrigger
     float requiredSeconds;
     float stillTime;
     bool isActive;
-    bool wasMoving;
+    //bool wasMoving;
 
     public Action OnStoppedMoving;
 
@@ -42,7 +42,7 @@ public class StandStillTrigger : RelicTrigger
         requiredSeconds = seconds;
         stillTime = 0f;
         isActive = false;
-        wasMoving = false;
+        //wasMoving = false;
     }
 
     public override void Register()
@@ -64,7 +64,7 @@ public class StandStillTrigger : RelicTrigger
             isActive = false;
             OnStoppedMoving?.Invoke();
         }
-        wasMoving = true;
+        //wasMoving = true;
     }
 
     System.Collections.IEnumerator Tick()
