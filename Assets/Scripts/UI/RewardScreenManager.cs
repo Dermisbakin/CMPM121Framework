@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class RewardScreenManager : MonoBehaviour
 {
@@ -13,6 +14,12 @@ public class RewardScreenManager : MonoBehaviour
     private GameObject takeButton;
     private GameObject skipButton;
     private TextMeshProUGUI spellInfoText;
+
+    private List<Relic> relicChoices = new List<Relic>();
+    private List<GameObject> relicButtons = new List<GameObject>();
+    private TextMeshProUGUI relicHeaderText;
+
+    private List<string> ownedRelicNames = new List<string>();
 
     void Start()
     {
@@ -49,6 +56,20 @@ public class RewardScreenManager : MonoBehaviour
 
         skipButton = CreateButton("Skip", new Vector2(0.55f, 0.15f), new Vector2(0.75f, 0.28f));
         skipButton.GetComponent<Button>().onClick.AddListener(SkipSpell);
+
+        GameObject relicHeader = new GameObject("Relic Header");
+        relicHeader.transform.SetParent(rewardUI.transform, false);
+        relicHeaderText = relicHeader.AddComponent<TextMeshProUGUI>();
+        relicHeaderText.alignment = TextAlignmentOptions.Center;
+        relicHeaderText.fontSize = 24;
+        relicHeaderText.color = Color.black;
+        relicHeaderText.text = "Choose a Relic:";
+
+        RectTransform relicHeaderRect = relicHeaderText.GetComponent<RectTransform>();
+        relicHeaderRect.anchorMin = new Vector2(0.15f, 0.35f);
+        relicHeaderRect.anchorMax = new Vector2(0.85f, 0.43f);
+        relicHeaderRect.offsetMin = Vector2.zero;
+        relicHeaderRect.offsetMax = Vector2.zero;
 
         rewardUI.SetActive(false);
     }
@@ -98,6 +119,10 @@ public class RewardScreenManager : MonoBehaviour
             if (shouldShow && GameManager.Instance.state == GameManager.GameState.WAVEEND)
             {
                 GenerateReward();
+                if (GameManager.Instance.wave % 3 == 0)
+                    GenerateRelicReward();
+                else
+                    HideRelicUI();
             }
         }
 
@@ -122,6 +147,70 @@ public class RewardScreenManager : MonoBehaviour
                              "\nDamage: " + pendingSpell.GetDamage() +
                              "  Mana: " + pendingSpell.GetManaCost() +
                              "  CD: " + pendingSpell.GetCooldown().ToString("F1") + "s";
+    }
+
+    void GenerateRelicReward()
+    {
+        // clear old relic buttons
+        foreach (GameObject btn in relicButtons)
+            Destroy(btn);
+        relicButtons.Clear();
+        relicChoices.Clear();
+
+        List<Relic> available = new List<Relic>();
+        foreach (Relic r in RelicLibrary.Instance.allRelics)
+        {
+            if (!ownedRelicNames.Contains(r.name))
+                available.Add(r);
+        }
+
+        int count = Mathf.Min(3, available.Count);
+        for (int i = 0; i < count; i++)
+        {
+            int idx = UnityEngine.Random.Range(0, available.Count);
+            relicChoices.Add(available[idx]);
+            available.RemoveAt(idx);
+        }
+
+        relicHeaderText.gameObject.SetActive(true);
+        for (int i = 0; i < relicChoices.Count; i++)
+        {
+            Relic relic = relicChoices[i];
+            float xMin = 0.1f + i * 0.3f;
+            float xMax = xMin + 0.25f;
+
+            GameObject btn = CreateButton(relic.name + "\n" + relic.description,
+                new Vector2(xMin, 0.10f), new Vector2(xMax, 0.33f));
+
+            int capturedIndex = i;
+            btn.GetComponent<Button>().onClick.AddListener(() => PickRelic(capturedIndex));
+            relicButtons.Add(btn);
+        }
+    }
+    void HideRelicUI()
+    {
+        foreach (GameObject btn in relicButtons)
+            Destroy(btn);
+        relicButtons.Clear();
+        relicChoices.Clear();
+        if (relicHeaderText != null)
+            relicHeaderText.gameObject.SetActive(false);
+    }
+
+    void PickRelic(int index)
+    {
+        if (index >= relicChoices.Count) return;
+
+        Relic chosen = relicChoices[index];
+        chosen.Activate();
+        ownedRelicNames.Add(chosen.name);
+
+        foreach (GameObject btn in relicButtons)
+            Destroy(btn);
+        relicButtons.Clear();
+        relicChoices.Clear();
+
+        relicHeaderText.text = "Relic acquired: " + chosen.name;
     }
 
     void TakeSpell()
